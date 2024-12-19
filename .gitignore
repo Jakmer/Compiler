@@ -2,6 +2,7 @@
 *.d
 
 # Compiled Object files
+build/
 *.slo
 *.lo
 *.o
@@ -30,3 +31,8 @@
 *.exe
 *.out
 *.app
+
+# Virtual machine and test files
+data/
+plan.txt
+
