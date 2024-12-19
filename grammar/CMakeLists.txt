@@ -15,6 +15,7 @@ FLEX_TARGET(Lexer ${LEX_FILE} ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${FLEX_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/grammar)
 
 add_library(grammar
     ${FLEX_Lexer_OUTPUTS}

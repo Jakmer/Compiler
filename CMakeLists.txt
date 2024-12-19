@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_subdirectory(grammar)
 include_directories(inc)
+include_directories(grammar)
 
 set(SOURCES
     src/app/main.cpp
