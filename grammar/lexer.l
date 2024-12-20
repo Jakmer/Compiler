@@ -1,14 +1,9 @@
 %{
     #include <iostream>
     #include <cstdio>
-    #include "tokens.hpp"
+    #include "parser.hpp"
 
-    union YYSTYPE {
-        int num;
-        char* id;
-    };
-
-    YYSTYPE yylval;
+    extern YYSTYPE yylval;
 %}
 
 %option c++
@@ -16,53 +11,54 @@
 
 %%
 
-#[^\n]*                { /* Ignore comments starting with # */ }
-"PROGRAM"           { return token::PROGRAM; }
-"PROCEDURE"         { return token::PROCEDURE; }
-"IS"                { return token::IS; }
-"BEGIN"             { return token::EBEGIN; }
-"END"               { return token::END; }
-"IF"                { return token::IF; }
-"THEN"              { return token::THEN; }
-"ELSE"              { return token::ELSE; }
-"ENDIF"             { return token::ENDIF; }
-"WHILE"             { return token::WHILE; }
-"DO"                { return token::DO; }
-"ENDWHILE"          { return token::ENDWHILE; }
-"REPEAT"            { return token::REPEAT; }
-"UNTIL"             { return token::UNTIL; }
-"FOR"               { return token::FOR; }
-"FROM"              { return token::FROM; }
-"TO"                { return token::TO; }
-"DOWNTO"            { return token::DOWNTO; }
-"ENDFOR"            { return token::ENDFOR; }
-"READ"              { return token::READ; }
-"WRITE"             { return token::WRITE; }
+#[^\n]* { /* Ignore comments */ }
+"PROGRAM"           { return PROGRAM; }
+"PROCEDURE"         { return PROCEDURE; }
+"IS"                { return IS; }
+"BEGIN"             { return EBEGIN; }
+"END"               { return END; }
+"IF"                { return IF; }
+"THEN"              { return THEN; }
+"ELSE"              { return ELSE; }
+"ENDIF"             { return ENDIF; }
+"WHILE"             { return WHILE; }
+"DO"                { return DO; }
+"ENDWHILE"          { return ENDWHILE; }
+"REPEAT"            { return REPEAT; }
+"UNTIL"             { return UNTIL; }
+"FOR"               { return FOR; }
+"FROM"              { return FROM; }
+"TO"                { return TO; }
+"DOWNTO"            { return DOWNTO; }
+"ENDFOR"            { return ENDFOR; }
+"READ"              { return READ; }
+"WRITE"             { return WRITE; }
 
-[a-zA-Z_][a-zA-Z0-9_]* { return token::pidentifier; } // Identifiers
-[0-9]+                 { yylval.num = atoi(yytext); return token::num; } // Numbers
+[a-zA-Z_][a-zA-Z0-9_]* { return pidentifier; } // Identifiers
+[0-9]+                 { yylval.num = atoi(yytext); return num; } // Numbers
 
-"+"                   { return token::PLUS; }
-"-"                   { return token::MINUS; }
-"*"                   { return token::TIMES; }
-"/"                   { return token::DIVIDE; }
-"%"                   { return token::MOD; }
-"="                   { return token::EQUALS; }
-"!="                  { return token::NEQ; }
-">"                   { return token::GREATER; }
-"<"                   { return token::LESS; }
-">="                  { return token::GEQ; }
-"<="                  { return token::LEQ; }
-":"                   { return token::COLON; }
-";"                   { return token::SEMICOLON; }
-","                   { return token::COMMA; }
-"("                   { return token::LPAREN; }
-")"                   { return token::RPAREN; }
-"["                   { return token::LBRACKET; }
-"]"                   { return token::RBRACKET; }
+"+"                    { return PLUS; }
+"-"                    { return MINUS; }
+"*"                    { return TIMES; }
+"/"                    { return DIVIDE; }
+"%"                    { return MOD; }
+":="                   { return ASSIGN; }
+"="                    { return EQUALS; }
+"!="                   { return NEQ; }
+">"                    { return GREATER; }
+"<"                    { return LESS; }
+">="                   { return GEQ; }
+"<="                   { return LEQ; }
+":"                    { return COLON; }
+";"                    { return SEMICOLON; }
+","                    { return COMMA; }
+"("                    { return LPAREN; }
+")"                    { return RPAREN; }
+"["                    { return LBRACKET; }
+"]"                    { return RBRACKET; }
 
-[ \t\n]+              { /* Ignore white spaces */ }
-.                     { printf("Invalid character: %s\n", yytext); exit(1); }
+[ \t\n]+               { /* Ignore white spaces */ }
+.                      { printf("Invalid character: %s\n", yytext); exit(1); }
 
 %%
 

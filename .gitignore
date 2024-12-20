@@ -3,6 +3,7 @@
 
 # Compiled Object files
 build/
+.cache/
 *.slo
 *.lo
 *.o

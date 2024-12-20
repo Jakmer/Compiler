@@ -1,7 +1,7 @@
 #include <FlexLexer.h>
 #include <fstream>
 #include <iostream>
-#include "tokens.hpp"
+#include "parser.hpp"
 
 static yyFlexLexer lexer;
 
@@ -21,12 +21,9 @@ int main(int argc, char** argv) {
 
     lexer.switch_streams(&file, &std::cout);
 
-    std::cout << "Starting lexer...\n";
-    int token;
-    while ((token = yylex()) != 0) {
-        std::cout << static_cast<token::TokenType>(token) << " : " << lexer.YYText() << "\n";
-    }
-    std::cout << "Lexer finished.\n";
+    std::cout << "Starting parser ...\n";
+    int parseResult = yyparse();
+    std::cout << "Parser finished with exit code " << parseResult << ".\n";
 
     return 0;
 }
