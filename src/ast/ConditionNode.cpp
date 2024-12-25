@@ -38,4 +38,9 @@ void ConditionNode::print(int indent) const {
     }
 }
 
+ConditionNode::~ConditionNode() {
+    delete value1;
+    delete value2;
+}
+
 }  // namespace ast

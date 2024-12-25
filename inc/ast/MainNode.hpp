@@ -13,6 +13,7 @@ class MainNode : public ASTNode {
     child commands;
 
     MainNode();
+    virtual ~MainNode();
 
     void print(int indent = 0) const override;
 };

@@ -7,6 +7,12 @@ namespace ast {
 
 CommandsNode::CommandsNode() = default;
 
+CommandsNode::~CommandsNode() {
+    for (auto& cmd : commands) {
+        delete cmd;
+    }
+}
+
 void CommandsNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "CommandsNode\n";
@@ -18,6 +24,11 @@ void CommandsNode::print(int indent) const {
 // -- AssignmentNode --
 
 AssignmentNode::AssignmentNode() = default;
+
+AssignmentNode::~AssignmentNode() {
+    delete identifier;
+    delete expression;
+}
 
 void AssignmentNode::print(int indent) const {
     std::string pad(indent, ' ');
@@ -35,6 +46,14 @@ void AssignmentNode::print(int indent) const {
 // -- IfStatementNode --
 
 IfStatementNode::IfStatementNode() = default;
+
+IfStatementNode::~IfStatementNode() {
+    delete condition;
+    delete commands;
+    if (elseCommands.has_value()) {
+        delete elseCommands.value();
+    }
+}
 
 void IfStatementNode::print(int indent) const {
     std::string pad(indent, ' ');
@@ -57,6 +76,11 @@ void IfStatementNode::print(int indent) const {
 
 WhileStatementNode::WhileStatementNode() = default;
 
+WhileStatementNode::~WhileStatementNode() {
+    delete condition;
+    delete commands;
+}
+
 void WhileStatementNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "WhileStatementNode\n";
@@ -74,6 +98,11 @@ void WhileStatementNode::print(int indent) const {
 
 RepeatStatementNode::RepeatStatementNode() = default;
 
+RepeatStatementNode::~RepeatStatementNode() {
+    delete condition;
+    delete commands;
+}
+
 void RepeatStatementNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "RepeatStatementNode\n";
@@ -90,6 +119,12 @@ void RepeatStatementNode::print(int indent) const {
 // -- ForToNode --
 
 ForToNode::ForToNode() = default;
+
+ForToNode::~ForToNode() {
+    delete valueFrom;
+    delete valueTo;
+    delete commands;
+}
 
 void ForToNode::print(int indent) const {
     std::string pad(indent, ' ');
@@ -112,6 +147,12 @@ void ForToNode::print(int indent) const {
 
 ForDowntoNode::ForDowntoNode() = default;
 
+ForDowntoNode::~ForDowntoNode() {
+    delete valueFrom;
+    delete valueTo;
+    delete commands;
+}
+
 void ForDowntoNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "ForDowntoNode: " << pidentifier << "\n";
@@ -133,6 +174,10 @@ void ForDowntoNode::print(int indent) const {
 
 ProcCallNode::ProcCallNode() = default;
 
+ProcCallNode::~ProcCallNode() {
+    delete args;
+}
+
 void ProcCallNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "ProcCallNode: " << pidentifier << "\n";
@@ -145,6 +190,8 @@ void ProcCallNode::print(int indent) const {
 // -- ArgsNode --
 
 ArgsNode::ArgsNode() = default;
+
+ArgsNode::~ArgsNode() = default;
 
 void ArgsNode::print(int indent) const {
     std::string pad(indent, ' ');
@@ -162,6 +209,10 @@ void ArgsNode::print(int indent) const {
 
 ReadNode::ReadNode() = default;
 
+ReadNode::~ReadNode() {
+    delete identifier;
+}
+
 void ReadNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "ReadNode\n";
@@ -174,6 +225,10 @@ void ReadNode::print(int indent) const {
 // -- WriteNode --
 
 WriteNode::WriteNode() = default;
+
+WriteNode::~WriteNode() {
+    delete value;
+}
 
 void WriteNode::print(int indent) const {
     std::string pad(indent, ' ');

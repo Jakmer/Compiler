@@ -22,4 +22,9 @@ void MainNode::print(int indent) const {
     }
 }
 
+MainNode::~MainNode() {
+    delete declarations;
+    delete commands;
+}
+
 }  // namespace ast

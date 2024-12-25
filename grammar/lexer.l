@@ -34,6 +34,8 @@
 "ENDFOR"            { return ENDFOR; }
 "READ"              { return READ; }
 "WRITE"             { return WRITE; }
+"T"                 { return T; }
+
 
 "+"                    { return PLUS; }
 "-"                    { return MINUS; }

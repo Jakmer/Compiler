@@ -17,6 +17,7 @@ class DeclarationsNode : public ASTNode {
     std::vector<std::string> pidentifiers;
 
     DeclarationsNode();
+    virtual ~DeclarationsNode();
 
     void print(int indent = 0) const override;
     void addArray(const std::string& pidentifier, int num1, int num2);

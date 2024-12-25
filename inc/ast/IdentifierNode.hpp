@@ -14,6 +14,7 @@ class IdentifierNode : public ASTNode {
     std::optional<std::string> arrayPidentifierIndex;
 
     IdentifierNode();
+    virtual ~IdentifierNode();
 
     void print(int indent = 0) const override;
 };

@@ -16,6 +16,7 @@ class ConditionNode : public ASTNode {
     Relation relation;
 
     ConditionNode();
+    virtual ~ConditionNode();
 
     void print(int indent = 0) const override;
 };

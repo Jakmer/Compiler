@@ -33,4 +33,6 @@ void DeclarationsNode::addPidentifier(const std::string& pidentifier) {
     pidentifiers.push_back(pidentifier);
 }
 
+DeclarationsNode::~DeclarationsNode() = default;
+
 }  // namespace ast

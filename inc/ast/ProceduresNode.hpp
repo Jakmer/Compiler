@@ -15,6 +15,7 @@ class ProceduresNode : public ASTNode {
     child commands;
 
     ProceduresNode();
+    virtual ~ProceduresNode();
 
     void print(int indent = 0) const override;
 };
@@ -25,6 +26,7 @@ class ProcHeadNode : public ASTNode {
     child args_decl;
 
     ProcHeadNode();
+    virtual ~ProcHeadNode();
 
     void print(int indent = 0) const override;
 };
@@ -35,6 +37,7 @@ class ArgsDeclNode : public ASTNode {
     std::vector<std::string> Tpidentifiers;
 
     ArgsDeclNode() = default;
+    virtual ~ArgsDeclNode();
 
     void print(int indent = 0) const override;
 };

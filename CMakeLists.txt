@@ -23,3 +23,15 @@ target_link_libraries(compiler
     grammar
     ast_lib
 )
+
+add_executable(compiler_debug ${SOURCES})
+
+target_link_libraries(compiler_debug
+    grammar_debug
+    ast_lib_debug
+)
+
+set_target_properties(compiler_debug PROPERTIES
+    COMPILE_FLAGS "-ggdb3 -O0"
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/debug
+)

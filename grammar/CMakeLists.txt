@@ -27,3 +27,18 @@ target_link_libraries(grammar
     ${FLEX_LIBRARIES}
     ast_lib
 )
+
+add_library(grammar_debug
+    ${FLEX_Lexer_OUTPUTS}
+    ${BISON_Parser_OUTPUTS}
+)
+
+target_link_libraries(grammar_debug
+    ${FLEX_LIBRARIES}
+    ast_lib_debug
+)
+
+set_target_properties(grammar_debug PROPERTIES
+    COMPILE_FLAGS "-ggdb3 -O0"
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/debug
+)

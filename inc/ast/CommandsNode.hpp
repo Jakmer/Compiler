@@ -14,6 +14,7 @@ class CommandsNode : public ASTNode {
     std::vector<child> commands;
 
     CommandsNode();
+    virtual ~CommandsNode();
 
     void print(int indent = 0) const override;
 };
@@ -26,6 +27,7 @@ class AssignmentNode : public ASTNode {
     child expression;
 
     AssignmentNode();
+    virtual ~AssignmentNode();
 
     void print(int indent = 0) const override;
 };
@@ -37,6 +39,7 @@ class IfStatementNode : public ASTNode {
     std::optional<child> elseCommands;
 
     IfStatementNode();
+    virtual ~IfStatementNode();
 
     void print(int indent = 0) const override;
 };
@@ -47,6 +50,7 @@ class WhileStatementNode : public ASTNode {
     child commands;
 
     WhileStatementNode();
+    virtual ~WhileStatementNode();
 
     void print(int indent = 0) const override;
 };
@@ -57,6 +61,7 @@ class RepeatStatementNode : public ASTNode {
     child commands;
 
     RepeatStatementNode();
+    virtual ~RepeatStatementNode();
 
     void print(int indent = 0) const override;
 };
@@ -69,6 +74,7 @@ class ForToNode : public ASTNode {
     child commands;
 
     ForToNode();
+    virtual ~ForToNode();
 
     void print(int indent = 0) const override;
 };
@@ -81,6 +87,7 @@ class ForDowntoNode : public ASTNode {
     child commands;
 
     ForDowntoNode();
+    virtual ~ForDowntoNode();
 
     void print(int indent = 0) const override;
 };
@@ -91,6 +98,7 @@ class ProcCallNode: public ASTNode {
     child args;
 
     ProcCallNode();
+    virtual ~ProcCallNode();
 
     void print(int indent = 0) const override;
 };
@@ -100,6 +108,7 @@ class ArgsNode : public ASTNode {
     std::vector<std::string> pidentifiers;
 
     ArgsNode();
+    virtual ~ArgsNode();
 
     void print(int indent = 0) const override;
 };
@@ -109,6 +118,7 @@ class ReadNode : public ASTNode {
     child identifier;
 
     ReadNode();
+    virtual ~ReadNode();
 
     void print(int indent = 0) const override;
 };
@@ -118,10 +128,11 @@ class WriteNode : public ASTNode {
     child value;
 
     WriteNode();
+    virtual ~WriteNode();
 
     void print(int indent = 0) const override;
 };
 
 }  // namespace ast
 
-#endif  // PROCEDURESNODE_HPP
+#endif  // COMMANDS_NODE_HPP

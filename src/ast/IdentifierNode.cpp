@@ -31,4 +31,6 @@ void IdentifierNode::print(int indent) const {
     }
 }
 
+IdentifierNode::~IdentifierNode() = default;
+
 }  // namespace ast

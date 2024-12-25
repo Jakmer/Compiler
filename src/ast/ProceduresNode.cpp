@@ -8,6 +8,14 @@ ProceduresNode::ProceduresNode()
       commands(nullptr) {
 }
 
+ProceduresNode::~ProceduresNode() {
+    delete proc_head;
+    if (declarations.has_value()) {
+        delete declarations.value();
+    }
+    delete commands;
+}
+
 void ProceduresNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "ProceduresNode\n";
@@ -18,13 +26,16 @@ void ProceduresNode::print(int indent) const {
     }
     if (declarations.has_value()) {
         std::cout << pad << "  declarations:\n";
-        std::cout<< declarations.value()<<'\n';
         declarations.value()->print(indent + 2);
     }
     if (commands) {
         std::cout << pad << "  commands:\n";
         commands->print(indent + 2);
     }
+}
+
+ProcHeadNode::~ProcHeadNode() {
+    delete args_decl;
 }
 
 ProcHeadNode::ProcHeadNode()
@@ -54,5 +65,7 @@ void ArgsDeclNode::print(int indent) const {
         std::cout << tid << " ";
     std::cout << "\n";
 }
+
+ArgsDeclNode::~ArgsDeclNode() = default;
 
 }  // namespace ast

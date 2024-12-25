@@ -14,6 +14,7 @@ class ValueNode : public ASTNode {
     std::optional<child> identifier;
 
     ValueNode();
+    virtual ~ValueNode();
 
     void print(int indent = 0) const override;
 };

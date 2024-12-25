@@ -39,4 +39,11 @@ void ExpressionNode::print(int indent) const {
     }
 }
 
+ExpressionNode::~ExpressionNode() {
+    delete value1;
+    if (value2.has_value()) {
+        delete value2.value();
+    }
+}
+
 }  // namespace ast

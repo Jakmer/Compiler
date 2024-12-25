@@ -8,6 +8,8 @@ ValueNode::ValueNode()
       identifier(std::nullopt) {
 }
 
+ValueNode::~ValueNode() = default;
+
 void ValueNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "ValueNode\n";

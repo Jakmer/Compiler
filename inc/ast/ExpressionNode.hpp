@@ -18,6 +18,7 @@ class ExpressionNode : public ASTNode {
     std::optional<MathOperation> mathOperation;
 
     ExpressionNode();
+    virtual ~ExpressionNode();
 
     void print(int indent = 0) const override;
 };

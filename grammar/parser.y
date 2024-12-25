@@ -4,6 +4,7 @@
 #include "AST.hpp"
 
 ast::ProgramAllNode* astRoot = nullptr;
+   int counter = 0;
 
 extern int yylex();
 extern int yyparse();
@@ -34,8 +35,7 @@ int yyerror(const char* s);
 
 program_all:
     procedures main {
-        ast::ProgramAllNode* programAllNode = new ast::ProgramAllNode();
-        programAllNode->procedures.push_back(dynamic_cast<ast::ProceduresNode*>($1));
+        ast::ProgramAllNode* programAllNode = dynamic_cast<ast::ProgramAllNode*>($1);
         programAllNode->main = dynamic_cast<ast::MainNode*>($2);
         astRoot = programAllNode;
         $$ = programAllNode;
@@ -47,7 +47,6 @@ procedures:
         ast::ProceduresNode* procedureNode = new ast::ProceduresNode();
         ast::ProcHeadNode* procHeadNode = dynamic_cast<ast::ProcHeadNode*>($3);
         ast::DeclarationsNode* declarationsNode = dynamic_cast<ast::DeclarationsNode*>($5);
-        declarationsNode->print();
         ast::CommandsNode* commandsNode = dynamic_cast<ast::CommandsNode*>($7);
         procedureNode->proc_head = procHeadNode;
         procedureNode->declarations = declarationsNode;
@@ -71,8 +70,8 @@ procedures:
         $$ = programAllNode;
     }
     | /* empty */ {
-        ast::ProceduresNode* procedureNode = new ast::ProceduresNode(); 
-        $$ = procedureNode;
+        ast::ProgramAllNode* programAllNode = new ast::ProgramAllNode();
+        $$ = programAllNode;
     }
     ;
 
@@ -223,8 +222,6 @@ declarations:
     declarations COMMA pidentifier {
         ast::DeclarationsNode* declarationsNode = dynamic_cast<ast::DeclarationsNode*>($1);
         declarationsNode->pidentifiers.push_back($3);
-        std::cout<<declarationsNode->pidentifiers.at(0)<<std::endl;
-        std::cout<<$3<<std::endl;
         $$ = declarationsNode;
     }
     | declarations COMMA pidentifier LBRACKET num COLON num RBRACKET {
@@ -234,11 +231,9 @@ declarations:
         $$ = declarationsNode;
     }
     | pidentifier {
-        std::cout << "pidentifier start: "<< $1 << std::endl;
         ast::DeclarationsNode* declarationsNode = new ast::DeclarationsNode();
         declarationsNode->pidentifiers.push_back($1);
         $$ = declarationsNode;
-        std::cout << "pidentifier end" << std::endl;
     }
     | pidentifier LBRACKET num COLON num RBRACKET {
         ast::DeclarationsNode* declarationsNode = new ast::DeclarationsNode();

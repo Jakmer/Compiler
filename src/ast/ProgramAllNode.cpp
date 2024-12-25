@@ -7,6 +7,13 @@ ProgramAllNode::ProgramAllNode()
     : main(nullptr) {
 }
 
+ProgramAllNode::~ProgramAllNode() {
+    for (auto& proc : procedures) {
+        delete proc;
+    }
+    delete main;
+}
+
 void ProgramAllNode::print(int indent) const {
     std::string pad(indent, ' ');
     std::cout << pad << "ProgramAllNode\n";

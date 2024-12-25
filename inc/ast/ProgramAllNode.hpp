@@ -13,6 +13,7 @@ class ProgramAllNode : public ASTNode {
     child main;
 
     ProgramAllNode();
+    virtual ~ProgramAllNode();
 
     void print(int indent = 0) const override;
 };
