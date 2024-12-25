@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(grammar)
+add_subdirectory(src/ast)
+
 include_directories(inc)
 include_directories(grammar)
 include_directories(${CMAKE_BINARY_DIR})
@@ -17,4 +19,7 @@ set(SOURCES
 
 add_executable(compiler ${SOURCES})
 
-target_link_libraries(compiler grammar)
+target_link_libraries(compiler
+    grammar
+    ast_lib
+)

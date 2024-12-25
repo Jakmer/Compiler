@@ -6,11 +6,11 @@ find_package(BISON REQUIRED)
 set(LEX_FILE lexer.l)
 set(PARSER_FILE parser.y)
 
-FLEX_TARGET(Lexer ${LEX_FILE} ${CMAKE_BINARY_DIR}/lexer.cpp
-DEFINES_FILE ${CMAKE_BINARY_DIR}/lexer.hpp)
+FLEX_TARGET(Lexer ${LEX_FILE} ${CMAKE_BINARY_DIR}/Lexer.cpp
+DEFINES_FILE ${CMAKE_BINARY_DIR}/Lexer.hpp)
 
-BISON_TARGET(Parser ${PARSER_FILE} ${CMAKE_BINARY_DIR}/parser.cpp
-DEFINES_FILE ${CMAKE_BINARY_DIR}/parser.hpp)
+BISON_TARGET(Parser ${PARSER_FILE} ${CMAKE_BINARY_DIR}/Parser.cpp
+DEFINES_FILE ${CMAKE_BINARY_DIR}/Parser.hpp)
 
 ADD_FLEX_BISON_DEPENDENCY(Lexer Parser)
 
@@ -23,4 +23,7 @@ add_library(grammar
     ${BISON_Parser_OUTPUTS}
 )
 
-target_link_libraries(grammar ${FLEX_LIBRARIES})
+target_link_libraries(grammar
+    ${FLEX_LIBRARIES}
+    ast_lib
+)

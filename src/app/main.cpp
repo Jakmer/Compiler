@@ -1,11 +1,16 @@
 #include <FlexLexer.h>
+
 #include <fstream>
 #include <iostream>
-#include "parser.hpp"
+
+#include "Parser.hpp"
+#include "ProgramAllNode.hpp"
 
 static yyFlexLexer lexer;
 
 int yylex() { return lexer.yylex(); }
+
+extern ast::ProgramAllNode* astRoot;
 
 int main(int argc, char** argv) {
     if (argc != 3) {
@@ -24,6 +29,8 @@ int main(int argc, char** argv) {
     std::cout << "Starting parser ...\n";
     int parseResult = yyparse();
     std::cout << "Parser finished with exit code " << parseResult << ".\n";
+    std::cout << "AST:" << '\n';
+    astRoot->print();
 
     return 0;
 }

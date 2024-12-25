@@ -1,7 +1,7 @@
 %{
     #include <iostream>
     #include <cstdio>
-    #include "parser.hpp"
+    #include "Parser.hpp"
 
     extern YYSTYPE yylval;
 %}
@@ -12,6 +12,7 @@
 %%
 
 #[^\n]* { /* Ignore comments */ }
+[ \t\n]+               { /* Ignore white spaces */ }
 "PROGRAM"           { return PROGRAM; }
 "PROCEDURE"         { return PROCEDURE; }
 "IS"                { return IS; }
@@ -34,9 +35,6 @@
 "READ"              { return READ; }
 "WRITE"             { return WRITE; }
 
-[a-zA-Z_][a-zA-Z0-9_]* { return pidentifier; } // Identifiers
-[0-9]+                 { yylval.num = atoi(yytext); return num; } // Numbers
-
 "+"                    { return PLUS; }
 "-"                    { return MINUS; }
 "*"                    { return TIMES; }
@@ -57,7 +55,10 @@
 "["                    { return LBRACKET; }
 "]"                    { return RBRACKET; }
 
-[ \t\n]+               { /* Ignore white spaces */ }
+
+[_a-z]+                { yylval.string_value = strdup(yytext); return pidentifier; } // Identifiers
+[0-9]+                 { yylval.int_value = atoi(yytext); return num; } // Numbers
+
 .                      { printf("Invalid character: %s\n", yytext); exit(1); }
 
 %%
