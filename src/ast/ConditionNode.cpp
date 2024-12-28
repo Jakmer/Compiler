@@ -7,6 +7,7 @@ ConditionNode::ConditionNode()
     : value1(nullptr),
       value2(nullptr),
       relation(EQ) {
+    setNodeType(CONDITION_NODE);
 }
 
 void ConditionNode::print(int indent) const {

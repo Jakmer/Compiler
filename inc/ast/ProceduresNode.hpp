@@ -36,7 +36,7 @@ class ArgsDeclNode : public ASTNode {
     std::vector<std::string> pidentifiers;
     std::vector<std::string> Tpidentifiers;
 
-    ArgsDeclNode() = default;
+    ArgsDeclNode();
     virtual ~ArgsDeclNode();
 
     void print(int indent = 0) const override;

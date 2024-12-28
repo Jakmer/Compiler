@@ -9,6 +9,10 @@ struct array {
     std::string pidentifier;
     int num1;  // beggining
     int num2;  // end
+
+    bool operator==(const array& other) const {
+        return pidentifier == pidentifier;
+    }
 };
 
 class DeclarationsNode : public ASTNode {

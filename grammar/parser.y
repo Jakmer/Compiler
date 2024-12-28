@@ -4,7 +4,6 @@
 #include "AST.hpp"
 
 ast::ProgramAllNode* astRoot = nullptr;
-   int counter = 0;
 
 extern int yylex();
 extern int yyparse();
@@ -15,6 +14,7 @@ int yyerror(const char* s);
 %}
 
 %debug
+%locations
 
 %union {
     int int_value;
@@ -104,6 +104,7 @@ commands:
 
 command:
     identifier ASSIGN expression SEMICOLON {
+        std::cout<< "Location a: " <<@4.first_line<<" "<<" "<<@4.last_line<<" "<<@4.first_column<<" "<<@4.last_column<<std::endl;
         ast::IdentifierNode* identifierNode = dynamic_cast<ast::IdentifierNode*>($1);
         ast::ExpressionNode* expressionNode = dynamic_cast<ast::ExpressionNode*>($3);
         ast::AssignmentNode* commandNode = new ast::AssignmentNode();
@@ -204,6 +205,7 @@ proc_head:
     pidentifier LPAREN args_decl RPAREN {
         ast::ProcHeadNode* procHeadNode = new ast::ProcHeadNode();
         procHeadNode->pidentifier = $1;
+        procHeadNode->setPosition(@1.first_line, @1.first_column);
         procHeadNode->args_decl = dynamic_cast<ast::ArgsDeclNode*>($3);
         $$ = procHeadNode;
     }
@@ -213,6 +215,7 @@ proc_call:
     pidentifier LPAREN args RPAREN {
         ast::ProcCallNode* procCallNode = new ast::ProcCallNode();
         procCallNode->pidentifier = $1;
+        procCallNode->setPosition(@1.first_line, @1.first_column);
         procCallNode->args = dynamic_cast<ast::ArgsNode*>($3);
         $$ = procCallNode;
     }
@@ -221,24 +224,28 @@ proc_call:
 declarations:
     declarations COMMA pidentifier {
         ast::DeclarationsNode* declarationsNode = dynamic_cast<ast::DeclarationsNode*>($1);
-        declarationsNode->pidentifiers.push_back($3);
+        declarationsNode->pidentifiers.push_back($3);   // TODO: Add more positions for each identifier
+        declarationsNode->setPosition(@3.first_line, @3.first_column);
         $$ = declarationsNode;
     }
     | declarations COMMA pidentifier LBRACKET num COLON num RBRACKET {
         ast::DeclarationsNode* declarationsNode = dynamic_cast<ast::DeclarationsNode*>($1);
         ast::array arr{ $3, $5, $7 };
         declarationsNode->arrays.push_back(arr);
+        declarationsNode->setPosition(@3.first_line, @3.first_column);
         $$ = declarationsNode;
     }
     | pidentifier {
         ast::DeclarationsNode* declarationsNode = new ast::DeclarationsNode();
         declarationsNode->pidentifiers.push_back($1);
+        declarationsNode->setPosition(@1.first_line, @1.first_column);
         $$ = declarationsNode;
     }
     | pidentifier LBRACKET num COLON num RBRACKET {
         ast::DeclarationsNode* declarationsNode = new ast::DeclarationsNode();
         ast::array arr { $1, $3, $5 };
         declarationsNode->arrays.push_back(arr);
+        declarationsNode->setPosition(@1.first_line, @1.first_column);
         $$ = declarationsNode;
     }
     ;
@@ -247,21 +254,25 @@ args_decl:
     args_decl COMMA pidentifier {
         ast::ArgsDeclNode* argsDeclNode = dynamic_cast<ast::ArgsDeclNode*>($1);
         argsDeclNode->pidentifiers.push_back($3);
+        argsDeclNode->setPosition(@3.first_line, @3.first_column);
         $$ = argsDeclNode;
     }
     | args_decl COMMA T pidentifier {
         ast::ArgsDeclNode* argsDeclNode = dynamic_cast<ast::ArgsDeclNode*>($1);
         argsDeclNode->Tpidentifiers.push_back($4);
+        argsDeclNode->setPosition(@4.first_line, @4.first_column);
         $$ = argsDeclNode;
     }
     | pidentifier {
         ast::ArgsDeclNode* argsDeclNode = new ast::ArgsDeclNode();
         argsDeclNode->pidentifiers.push_back($1);
+        argsDeclNode->setPosition(@1.first_line, @1.first_column);
         $$ = argsDeclNode;
     }
     | T pidentifier {
         ast::ArgsDeclNode* argsDeclNode = new ast::ArgsDeclNode();
         argsDeclNode->Tpidentifiers.push_back($2);
+        argsDeclNode->setPosition(@2.first_line, @2.first_column);
         $$ = argsDeclNode;
     }
     ;
@@ -270,17 +281,28 @@ args:
     args COMMA pidentifier {
         ast::ArgsNode* argsNode = dynamic_cast<ast::ArgsNode*>($1);
         argsNode->pidentifiers.push_back($3);
+        argsNode->setPosition(@3.first_line, @3.first_column);
         $$ = argsNode;
     }
     | pidentifier {
         ast::ArgsNode* argsNode = new ast::ArgsNode();
         argsNode->pidentifiers.push_back($1);
+        argsNode->setPosition(@1.first_line, @1.first_column);
         $$ = argsNode;
     }
     ;
 
 expression:
-    value
+    value {
+        ASTNode* node1 = $1;
+        node1->setPosition(@1.first_line, @1.first_column);
+        ast::ValueNode* valueNode1 = dynamic_cast<ast::ValueNode*>(node1);
+
+        ast::ExpressionNode* expressionNode = new ast::ExpressionNode();
+        expressionNode->value1 = valueNode1;
+
+        $$ = expressionNode;
+    }
     | value PLUS value {
         ASTNode* node1 = $1;
         ASTNode* node2 = $3;
@@ -433,18 +455,21 @@ identifier:
     pidentifier {
         ast::IdentifierNode* node = new ast::IdentifierNode();
         node->pidentifier = $1;
+        node->setPosition(@1.first_line, @1.first_column);
         $$ = node;
     }
     | pidentifier LBRACKET pidentifier RBRACKET {
         ast::IdentifierNode* node = new ast::IdentifierNode();
         node->Tpidentifier = $1;
         node->arrayPidentifierIndex = $3;
+        node->setPosition(@1.first_line, @1.first_column);
         $$ = node;
     }
     | pidentifier LBRACKET num RBRACKET {
         ast::IdentifierNode* node = new ast::IdentifierNode();
         node->Tpidentifier = $1;
         node->arrayNumIndex = $3;
+        node->setPosition(@1.first_line, @1.first_column);
         $$ = node;
     }
     ;
@@ -452,7 +477,8 @@ identifier:
 %%
 
 int yyerror(const char* s) {
-    fprintf(stderr, "Parser error: %s\n", s);
+    fprintf(stderr, "Parse error at line %d, column %d: %s\n", 
+            yylloc.first_line, yylloc.first_column, s);
     return 0;
 }
 

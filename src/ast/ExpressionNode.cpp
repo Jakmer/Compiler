@@ -7,6 +7,7 @@ ExpressionNode::ExpressionNode()
     : value1(nullptr),
       value2(std::nullopt),
       mathOperation(std::nullopt) {
+    setNodeType(EXPRESSION_NODE);
 }
 
 void ExpressionNode::print(int indent) const {

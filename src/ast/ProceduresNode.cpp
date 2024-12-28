@@ -6,6 +6,7 @@ namespace ast {
 ProceduresNode::ProceduresNode()
     : proc_head(nullptr),
       commands(nullptr) {
+    setNodeType(PROCEDURES_NODE);
 }
 
 ProceduresNode::~ProceduresNode() {
@@ -41,6 +42,7 @@ ProcHeadNode::~ProcHeadNode() {
 ProcHeadNode::ProcHeadNode()
     : pidentifier(""),
       args_decl(nullptr) {
+    setNodeType(PROC_HEAD_NODE);
 }
 
 void ProcHeadNode::print(int indent) const {
@@ -50,6 +52,10 @@ void ProcHeadNode::print(int indent) const {
         std::cout << pad << "  args_decl:\n";
         args_decl->print(indent + 2);
     }
+}
+
+ArgsDeclNode::ArgsDeclNode() {
+    setNodeType(ARGS_DECL_NODE);
 }
 
 void ArgsDeclNode::print(int indent) const {

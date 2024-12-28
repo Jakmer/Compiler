@@ -1,11 +1,14 @@
 #include "CommandsNode.hpp"
 #include <iostream>
+#include "ASTNode.hpp"
 
 namespace ast {
 
 // -- CommandsNode --
 
-CommandsNode::CommandsNode() = default;
+CommandsNode::CommandsNode() {
+    setNodeType(COMMANDS_NODE);
+}
 
 CommandsNode::~CommandsNode() {
     for (auto& cmd : commands) {
@@ -23,7 +26,9 @@ void CommandsNode::print(int indent) const {
 
 // -- AssignmentNode --
 
-AssignmentNode::AssignmentNode() = default;
+AssignmentNode::AssignmentNode() {
+    setNodeType(ASSIGNMENT_NODE);
+}
 
 AssignmentNode::~AssignmentNode() {
     delete identifier;
@@ -45,7 +50,9 @@ void AssignmentNode::print(int indent) const {
 
 // -- IfStatementNode --
 
-IfStatementNode::IfStatementNode() = default;
+IfStatementNode::IfStatementNode() {
+    setNodeType(IF_STATEMENT_NODE);
+}
 
 IfStatementNode::~IfStatementNode() {
     delete condition;
@@ -74,7 +81,9 @@ void IfStatementNode::print(int indent) const {
 
 // -- WhileStatementNode --
 
-WhileStatementNode::WhileStatementNode() = default;
+WhileStatementNode::WhileStatementNode() {
+    setNodeType(WHILE_STATEMENT_NODE);
+}
 
 WhileStatementNode::~WhileStatementNode() {
     delete condition;
@@ -96,7 +105,9 @@ void WhileStatementNode::print(int indent) const {
 
 // -- RepeatStatementNode --
 
-RepeatStatementNode::RepeatStatementNode() = default;
+RepeatStatementNode::RepeatStatementNode() {
+    setNodeType(REPEAT_STATEMENT_NODE);
+}
 
 RepeatStatementNode::~RepeatStatementNode() {
     delete condition;
@@ -118,7 +129,9 @@ void RepeatStatementNode::print(int indent) const {
 
 // -- ForToNode --
 
-ForToNode::ForToNode() = default;
+ForToNode::ForToNode() {
+    setNodeType(FOR_TO_NODE);
+}
 
 ForToNode::~ForToNode() {
     delete valueFrom;
@@ -145,7 +158,9 @@ void ForToNode::print(int indent) const {
 
 // -- ForDowntoNode --
 
-ForDowntoNode::ForDowntoNode() = default;
+ForDowntoNode::ForDowntoNode() {
+    setNodeType(FOR_DOWNTO_NODE);
+}
 
 ForDowntoNode::~ForDowntoNode() {
     delete valueFrom;
@@ -172,7 +187,9 @@ void ForDowntoNode::print(int indent) const {
 
 // -- ProcCallNode --
 
-ProcCallNode::ProcCallNode() = default;
+ProcCallNode::ProcCallNode() {
+    setNodeType(PROC_CALL_NODE);
+}
 
 ProcCallNode::~ProcCallNode() {
     delete args;
@@ -189,7 +206,9 @@ void ProcCallNode::print(int indent) const {
 
 // -- ArgsNode --
 
-ArgsNode::ArgsNode() = default;
+ArgsNode::ArgsNode() {
+    setNodeType(ARGS_NODE);
+}
 
 ArgsNode::~ArgsNode() = default;
 
@@ -207,7 +226,9 @@ void ArgsNode::print(int indent) const {
 
 // -- ReadNode --
 
-ReadNode::ReadNode() = default;
+ReadNode::ReadNode() {
+    setNodeType(READ_NODE);
+}
 
 ReadNode::~ReadNode() {
     delete identifier;
@@ -224,7 +245,9 @@ void ReadNode::print(int indent) const {
 
 // -- WriteNode --
 
-WriteNode::WriteNode() = default;
+WriteNode::WriteNode() {
+    setNodeType(WRITE_NODE);
+}
 
 WriteNode::~WriteNode() {
     delete value;

@@ -9,6 +9,7 @@ set(SOURCES
     ProceduresNode.cpp
     ProgramAllNode.cpp
     ValueNode.cpp
+    ASTNodeFactory.cpp
 )
 
 add_library(ast_lib

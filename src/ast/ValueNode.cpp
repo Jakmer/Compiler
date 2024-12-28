@@ -6,6 +6,7 @@ namespace ast {
 ValueNode::ValueNode()
     : num(std::nullopt),
       identifier(std::nullopt) {
+    setNodeType(VALUE_NODE);
 }
 
 ValueNode::~ValueNode() = default;

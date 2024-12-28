@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(grammar)
 add_subdirectory(src/ast)
+add_subdirectory(src/semantic_analyzer)
 
 include_directories(inc)
 include_directories(grammar)
@@ -22,6 +23,7 @@ add_executable(compiler ${SOURCES})
 target_link_libraries(compiler
     grammar
     ast_lib
+    semana_lib
 )
 
 add_executable(compiler_debug ${SOURCES})
@@ -29,6 +31,7 @@ add_executable(compiler_debug ${SOURCES})
 target_link_libraries(compiler_debug
     grammar_debug
     ast_lib_debug
+    semana_lib_debug
 )
 
 set_target_properties(compiler_debug PROPERTIES

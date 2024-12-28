@@ -5,6 +5,7 @@ namespace ast {
 
 ProgramAllNode::ProgramAllNode()
     : main(nullptr) {
+    setNodeType(PROGRAM_ALL_NODE);
 }
 
 ProgramAllNode::~ProgramAllNode() {

@@ -3,7 +3,9 @@
 
 namespace ast {
 
-DeclarationsNode::DeclarationsNode() = default;
+DeclarationsNode::DeclarationsNode() {
+    setNodeType(DECLARATIONS_NODE);
+}
 
 void DeclarationsNode::print(int indent) const {
     std::string pad(indent, ' ');

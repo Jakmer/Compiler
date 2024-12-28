@@ -5,6 +5,7 @@ namespace ast {
 
 MainNode::MainNode()
     : declarations(nullptr), commands(nullptr) {
+    setNodeType(MAIN_NODE);
 }
 
 void MainNode::print(int indent) const {

@@ -8,6 +8,7 @@ IdentifierNode::IdentifierNode()
       Tpidentifier(std::nullopt),
       arrayNumIndex(std::nullopt),
       arrayPidentifierIndex(std::nullopt) {
+    setNodeType(IDENTIFIER_NODE);
 }
 
 void IdentifierNode::print(int indent) const {
