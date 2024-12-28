@@ -31,6 +31,7 @@ class SemanticAnalyzer {
     std::vector<std::string> errors;
     SymbolTable symbolTable;
     std::string filename;
+    ASTNode* astRoot;
 };
 
 }  // namespace semana

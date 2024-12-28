@@ -7,11 +7,14 @@ namespace semana {
 
 SemanticAnalyzer::SemanticAnalyzer(std::string& filename) {
     this->filename = filename;
+    this->astRoot = nullptr;
 }
 
 SemanticAnalyzer::~SemanticAnalyzer() {}
 
-void SemanticAnalyzer::analyze(ASTNode* root) { processNode(root); }
+void SemanticAnalyzer::analyze(ASTNode* root) { 
+    processNode(root);
+}
 
 bool SemanticAnalyzer::hasErrors() const { return false; }
 
@@ -110,7 +113,11 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             // pidentfier cant be changed in for loop
             Symbol symbol(semana::VARIABLE_NAME,
                           semana::VariableType::FOR_ITERATOR, pidentifier);
-            symbolTable.insert(symbol);
+            auto validationMessage = symbolTable.insert(symbol);
+            if (validationMessage.errorType != ErrorType::GOOD) {
+                auto location = getLocation(node);
+                raiseError(validationMessage, location);
+            }
             processNode(forToNode->valueFrom);
             processNode(forToNode->valueTo);
             processNode(forToNode->commands);
@@ -123,7 +130,11 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             // pidentfier cant be changed in for loop
             Symbol symbol(semana::VARIABLE_NAME,
                           semana::VariableType::FOR_ITERATOR, pidentifier);
-            symbolTable.insert(symbol);
+            auto validationMessage = symbolTable.insert(symbol);
+            if (validationMessage.errorType != ErrorType::GOOD) {
+                auto location = getLocation(node);
+                raiseError(validationMessage, location);
+            }
             processNode(forDowntoNode->valueFrom);
             processNode(forDowntoNode->valueTo);
             processNode(forDowntoNode->commands);
@@ -160,7 +171,11 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto procName = procHeadNode->pidentifier;
             Symbol procSymbol(semana::PROCEDURE_NAME,
                               semana::VariableType::PROCEDURE, procName);
-            symbolTable.insert(procSymbol);
+            auto validationMessage = symbolTable.insert(procSymbol);
+            if (validationMessage.errorType != ErrorType::GOOD) {
+                auto location = getLocation(node);
+                raiseError(validationMessage, location);
+            }
             symbolTable.openScope(procName, ScopeType::PROCEDURE);
             processNode(procHeadNode->args_decl);
             break;
@@ -171,13 +186,21 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             for (auto& pidentifier : declarationsNode->pidentifiers) {
                 Symbol varSymbol(semana::VARIABLE_NAME,
                                  semana::VariableType::NUM, pidentifier);
-                symbolTable.insert(varSymbol);
+                auto validationMessage = symbolTable.insert(varSymbol);
+                if (validationMessage.errorType != ErrorType::GOOD) {
+                    auto location = getLocation(node);
+                    raiseError(validationMessage, location);
+                }
             }
             for (auto& Tpidentifier : declarationsNode->arrays) {
                 ast::array array = Tpidentifier;
-                Symbol arraySymbol(semana::VARIABLE_NAME,
+                Symbol arraySymbol(semana::ARRAY_NAME,
                                    semana::VariableType::ARRAY, array);
-                symbolTable.insert(arraySymbol);
+                auto validationMessage = symbolTable.insert(arraySymbol);
+                if (validationMessage.errorType != ErrorType::GOOD) {
+                    auto location = getLocation(node);
+                    raiseError(validationMessage, location);
+                }
             }
             break;
         }
@@ -187,13 +210,21 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             for (auto& arg : argsDeclNode->pidentifiers) {
                 Symbol argSymbol(semana::VARIABLE_NAME,
                                  semana::VariableType::NUM, arg);
-                symbolTable.insert(argSymbol);
+                auto validationMessage = symbolTable.insert(argSymbol);
+                if (validationMessage.errorType != ErrorType::GOOD) {
+                    auto location = getLocation(node);
+                    raiseError(validationMessage, location);
+                }
             }
             for (auto& arg : argsDeclNode->Tpidentifiers) {
                 ast::array argArray = {arg, 0, 0};
-                Symbol argSymbol(semana::VARIABLE_NAME,
+                Symbol argSymbol(semana::ARRAY_NAME,
                                  semana::VariableType::ARRAY, arg);
-                symbolTable.insert(argSymbol);
+                auto validationMessage = symbolTable.insert(argSymbol);
+                if (validationMessage.errorType != ErrorType::GOOD) {
+                    auto location = getLocation(node);
+                    raiseError(validationMessage, location);
+                }
             }
             break;
         }
@@ -256,11 +287,12 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             } else if (identifierNode->Tpidentifier.has_value()) {
                 std::string pidentifier = identifierNode->Tpidentifier.value();
                 if (identifierNode->arrayNumIndex.has_value()) {
+                    // TODO: check if arrayIndex is in range
                     int arrayIndex = identifierNode->arrayNumIndex.value();
 
                     // here I use 0,0 as a placeholder for array range because I
                     // don't have the information about the array range
-                    Symbol symbol(semana::VARIABLE_NAME,
+                    Symbol symbol(semana::ARRAY_NAME,
                                   semana::VariableType::ARRAY,
                                   ast::array{pidentifier, 0, 0});
                     auto validationMessage = symbolTable.validateSymbol(symbol);
@@ -282,7 +314,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
                         raiseError(validationMessage, location);
                     }
 
-                    Symbol symbolArray(semana::VARIABLE_NAME,
+                    Symbol symbolArray(semana::ARRAY_NAME,
                                        semana::VariableType::ARRAY,
                                        ast::array{pidentifier, 0, 0});
                     auto validationMessageArray =
@@ -290,7 +322,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
 
                     if (validationMessageArray.errorType != ErrorType::GOOD) {
                         auto location = getLocation(node);
-                        raiseError(validationMessage, location);
+                        raiseError(validationMessageArray, location);
                     }
                 }
             }
@@ -352,6 +384,11 @@ void SemanticAnalyzer::raiseError(ValidationMessage& message,
                       << message.content << resetColorCode << std::endl;
             break;
         }
+        case ErrorType::RECURSIVE_CALL: {
+            std::cerr << redColorCode << "Recursive call: " << location
+                      << message.content << resetColorCode << std::endl;
+            break;
+        }
         case ErrorType::ITERATOR: {
             std::cerr << redColorCode << "Iterator: " << location
                       << message.content << resetColorCode << std::endl;
@@ -371,8 +408,15 @@ std::string SemanticAnalyzer::getLocation(ASTNode* node) {
 void SemanticAnalyzer::printSymbolTable() { symbolTable.printSymbols(); }
 
 ValidationMessage SemanticAnalyzer::validateIterator(ASTNode* node) {
+    // TODO: implement function that checks if we dont modify iterator and if
+    // iterator is used only in loop scope NODE
+    auto isForLoop = [](ASTNode* node) {
+        return node->getNodeType() == FOR_TO_NODE ||
+               node->getNodeType() == FOR_DOWNTO_NODE;
+    };
 
-    // TODO: implement function that checks if we dont modify iterator and if iterator is used only in loop scope
+    // store FOR_TO_NODE or FOR_DOWNTO_NODE node in stack and check if iterator is used in loop scope
+
     return {ErrorType::GOOD, "Good"};
 }
 

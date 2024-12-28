@@ -29,7 +29,7 @@ enum SymbolType {
 };
 
 struct Symbol {
-    SymbolType symbolType;
+    SymbolType symbolType;  // probably unnecessary
     VariableType type;
     std::variant<std::string, ast::array> name;
 
@@ -59,6 +59,7 @@ enum ErrorType {
     UNDECLARED_MAIN,
     UNDECLARED_GLOBAL,
     TYPE_MISMATCH,
+    RECURSIVE_CALL,
     ITERATOR // when receive ITERATOR, we should check on AST whether is in RANGE
 };
 
@@ -70,10 +71,10 @@ struct ValidationMessage {
 class SymbolTable {
    public:
     SymbolTable() = default;
-    void insert(const Symbol& symbol);
     void printSymbols();
     void openScope(std::string& name, ScopeType scopeType);
     void closeScope();
+    ValidationMessage insert(const Symbol& symbol);
     ValidationMessage validateSymbol(Symbol& symbol);
     ValidationMessage validateDeclaration(const Symbol& symbol);
 

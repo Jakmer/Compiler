@@ -4,17 +4,17 @@
 
 namespace semana {
 
-void SymbolTable::insert(const Symbol& symbol) {
+ValidationMessage SymbolTable::insert(const Symbol& symbol) {
     if (scopeStack.empty()) {
         throw std::runtime_error("No open scope to insert symbol");
     }
 
     auto validateMsg = validateDeclaration(symbol);
-    if (validateMsg.errorType != ErrorType::GOOD) {
-        // add error
-    } else {
+    if (validateMsg.errorType == ErrorType::GOOD) {
         scopeStack.top().symbols.push_back(symbol);
     }
+
+    return validateMsg;
 }
 
 void SymbolTable::openScope(std::string& name, ScopeType scopeType) {
@@ -41,16 +41,41 @@ ValidationMessage SymbolTable::validateDeclaration(const Symbol& symbol) {
     for (const auto& sym : currentScope) {
         if (std::holds_alternative<std::string>(sym.name) &&
             std::holds_alternative<std::string>(symbol.name) &&
-            std::get<std::string>(sym.name) == std::get<std::string>(symbol.name)) {
+            std::get<std::string>(sym.name) ==
+                std::get<std::string>(symbol.name)) {
             std::string invalidPidentifier = std::get<std::string>(sym.name);
             return {ErrorType::DUPLICATE_DECLARATION, invalidPidentifier};
+        } else if (std::holds_alternative<ast::array>(sym.name) &&
+                   std::holds_alternative<ast::array>(symbol.name) &&
+                   std::get<ast::array>(sym.name) ==
+                       std::get<ast::array>(symbol.name)) {
+            std::string invalidArray =
+                std::get<ast::array>(sym.name).pidentifier;
+            return {ErrorType::DUPLICATE_DECLARATION, invalidArray};
+        } else if (std::holds_alternative<std::string>(sym.name) &&
+                   std::holds_alternative<ast::array>(symbol.name)) {
+            if (std::get<std::string>(sym.name) ==
+                std::get<ast::array>(symbol.name).pidentifier) {
+                std::string invalidPidentifier =
+                    std::get<std::string>(sym.name);
+                return {ErrorType::DUPLICATE_DECLARATION, invalidPidentifier};
+            }
+        } else if (std::holds_alternative<ast::array>(sym.name) &&
+                   std::holds_alternative<std::string>(symbol.name)) {
+            if (std::get<ast::array>(sym.name).pidentifier ==
+                std::get<std::string>(symbol.name)) {
+                std::cout << "BALABBALABAL\n";
+                std::string invalidArray =
+                    std::get<ast::array>(sym.name).pidentifier;
+                return {ErrorType::DUPLICATE_DECLARATION, invalidArray};
+            }
         }
         if (sym.type == semana::VariableType::ARRAY) {
             if (std::holds_alternative<ast::array>(sym.name)) {
                 auto array = std::get<ast::array>(sym.name);
                 if (array.num1 > array.num2) {
-                    std::string invalidRange = std::to_string(array.num1) + ":" +
-                                               std::to_string(array.num2);
+                    std::string invalidRange = std::to_string(array.num1) +
+                                               ":" + std::to_string(array.num2);
                     return {ErrorType::INCORRECT_ARRAY_RANGE, invalidRange};
                 }
             }
@@ -68,6 +93,12 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
     auto& currentScope = copyStack.top().symbols;
 
     if (symbol.symbolType == PROCEDURE_NAME) {
+        // check if not recursive call
+        auto scopeName = copyStack.top().name;
+        if (std::holds_alternative<std::string>(symbol.name) &&
+            std::get<std::string>(symbol.name) == scopeName) {
+            return {ErrorType::RECURSIVE_CALL, scopeName};
+        }
         // get deeper scope
         if (copyStack.size() < 2) {
             return {ErrorType::UNDECLARED_PROCEDURE, "Undeclared procedure"};
@@ -80,28 +111,32 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
 
     std::optional<Symbol> symbolFromTable;
     for (const auto& sym : currentScope) {
-        if (std::holds_alternative<std::string>(sym.name) && 
+        if (std::holds_alternative<std::string>(sym.name) &&
             std::holds_alternative<std::string>(symbol.name) &&
-            std::get<std::string>(sym.name) == std::get<std::string>(symbol.name)) {
+            std::get<std::string>(sym.name) ==
+                std::get<std::string>(symbol.name)) {
             symbolFromTable = sym;
             break;
-        } else if (std::holds_alternative<ast::array>(sym.name) && 
-                   std::holds_alternative<ast::array>(symbol.name) &&   
-                   std::get<ast::array>(sym.name) == std::get<ast::array>(symbol.name)) {
+        } else if (std::holds_alternative<ast::array>(sym.name) &&
+                   std::holds_alternative<ast::array>(symbol.name) &&
+                   std::get<ast::array>(sym.name) ==
+                       std::get<ast::array>(symbol.name)) {
             symbolFromTable = sym;
             break;
-        }
-        else if(std::holds_alternative<std::string>(sym.name) && 
-                std::holds_alternative<ast::array>(symbol.name)){
-            if(std::get<std::string>(sym.name) == std::get<ast::array>(symbol.name).pidentifier){
+        } else if (std::holds_alternative<std::string>(sym.name) &&
+                   std::holds_alternative<ast::array>(symbol.name)) {
+            if (std::get<std::string>(sym.name) ==
+                std::get<ast::array>(symbol.name).pidentifier) {
                 symbolFromTable = sym;
                 break;
             }
         }
-        // below thereis a situation when we pass an array as a function argument - then symbol is treated as num
-        else if(std::holds_alternative<ast::array>(sym.name) && 
-                std::holds_alternative<std::string>(symbol.name)){
-            if(std::get<ast::array>(sym.name).pidentifier == std::get<std::string>(symbol.name)){
+        // below thereis a situation when we pass an array as a function
+        // argument - then symbol is treated as num
+        else if (std::holds_alternative<ast::array>(sym.name) &&
+                 std::holds_alternative<std::string>(symbol.name)) {
+            if (std::get<ast::array>(sym.name).pidentifier ==
+                std::get<std::string>(symbol.name)) {
                 symbolFromTable = sym;
                 symbol.symbolType = ARRAY_NAME;
                 break;
@@ -109,7 +144,9 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
         }
     }
 
-    if(symbolFromTable.has_value() && symbolFromTable.value().type == VariableType::FOR_ITERATOR && symbol.type == VariableType::NUM){
+    if (symbolFromTable.has_value() &&
+        symbolFromTable.value().type == VariableType::FOR_ITERATOR &&
+        symbol.type == VariableType::NUM) {
         return {ErrorType::ITERATOR, "Validate if is in loop scope"};
     }
 
@@ -117,21 +154,24 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
         switch (symbol.symbolType) {
             case VARIABLE_NAME: {
                 if (std::holds_alternative<std::string>(symbol.name)) {
-                    std::string invalidPidentifier = std::get<std::string>(symbol.name);
+                    std::string invalidPidentifier =
+                        std::get<std::string>(symbol.name);
                     return {ErrorType::UNDECLARED_VARIABLE, invalidPidentifier};
                 }
                 break;
             }
             case ARRAY_NAME: {
                 if (std::holds_alternative<ast::array>(symbol.name)) {
-                    std::string invalidArray = std::get<ast::array>(symbol.name).pidentifier;
+                    std::string invalidArray =
+                        std::get<ast::array>(symbol.name).pidentifier;
                     return {ErrorType::UNDECLARED_ARRAY, invalidArray};
                 }
                 break;
             }
             case PROCEDURE_NAME: {
                 if (std::holds_alternative<std::string>(symbol.name)) {
-                    std::string invalidProcedure = std::get<std::string>(symbol.name);
+                    std::string invalidProcedure =
+                        std::get<std::string>(symbol.name);
                     return {ErrorType::UNDECLARED_PROCEDURE, invalidProcedure};
                 }
                 break;
@@ -149,14 +189,17 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
         case VARIABLE_NAME: {
             if (symbolFromTable->type == semana::VariableType::ARRAY) {
                 if (std::holds_alternative<std::string>(symbol.name)) {
-                    std::string invalidPidentifier = std::get<std::string>(symbol.name);
-                    return {ErrorType::TYPE_MISMATCH,
-                            "Expected array, got variable. " + invalidPidentifier};
+                    std::string invalidPidentifier =
+                        std::get<std::string>(symbol.name);
+                    return {
+                        ErrorType::TYPE_MISMATCH,
+                        "Expected array, got variable. " + invalidPidentifier};
                 }
             }
             if (symbolFromTable->type != symbol.type) {
                 if (std::holds_alternative<std::string>(symbol.name)) {
-                    std::string invalidPidentifier = std::get<std::string>(symbol.name);
+                    std::string invalidPidentifier =
+                        std::get<std::string>(symbol.name);
                     return {ErrorType::TYPE_MISMATCH,
                             "Expected variable, got something else. " +
                                 invalidPidentifier};
@@ -167,16 +210,19 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
         case ARRAY_NAME: {
             if (symbolFromTable->type == semana::VariableType::NUM) {
                 if (std::holds_alternative<ast::array>(symbol.name)) {
-                    std::string invalidArray = std::get<ast::array>(symbol.name).pidentifier;
+                    std::string invalidArray =
+                        std::get<ast::array>(symbol.name).pidentifier;
                     return {ErrorType::TYPE_MISMATCH,
-                            "Expected variable, got array. " + invalidArray};
+                            "Expected array, got variable. " + invalidArray};
                 }
             }
             if (symbolFromTable->type != symbol.type) {
                 if (std::holds_alternative<ast::array>(symbol.name)) {
-                    std::string invalidArray = std::get<ast::array>(symbol.name).pidentifier;
-                    return {ErrorType::TYPE_MISMATCH,
-                            "Expected array, got something else. " + invalidArray};
+                    std::string invalidArray =
+                        std::get<ast::array>(symbol.name).pidentifier;
+                    return {
+                        ErrorType::TYPE_MISMATCH,
+                        "Expected array, got something else. " + invalidArray};
                 }
             }
             break;
@@ -184,7 +230,8 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
         case PROCEDURE_NAME: {
             if (symbolFromTable->type != symbol.type) {
                 if (std::holds_alternative<std::string>(symbol.name)) {
-                    std::string invalidProcedure = std::get<std::string>(symbol.name);
+                    std::string invalidProcedure =
+                        std::get<std::string>(symbol.name);
                     return {ErrorType::TYPE_MISMATCH,
                             "Expected procedure, got something else. " +
                                 invalidProcedure};
@@ -203,6 +250,10 @@ ValidationMessage SymbolTable::validateSymbol(Symbol& symbol) {
             throw std::runtime_error("Unknown symbol type");
         }
     }
+
+    // check if symbol is initialized
+    // check if we assign num to num (not array)
+    // check iv passed parameters are correct
 
     return {ErrorType::GOOD, "Good"};
 }
