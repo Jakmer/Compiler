@@ -10,7 +10,7 @@ using child = ASTNode*;
 
 class ValueNode : public ASTNode {
    public:
-    std::optional<int> num;
+    std::optional<std::string> num;
     std::optional<child> identifier;
 
     ValueNode();

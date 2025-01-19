@@ -28,7 +28,7 @@ int yyerror(const char* s);
 %token T
 
 %type <node_value> program_all main command procedures expression condition value identifier proc_head proc_call declarations args_decl args commands
-%type <int_value> num
+%type <string_value> num
 %type <string_value> pidentifier
 
 %%

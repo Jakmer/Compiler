@@ -12,9 +12,7 @@ SemanticAnalyzer::SemanticAnalyzer(std::string& filename) {
 
 SemanticAnalyzer::~SemanticAnalyzer() {}
 
-void SemanticAnalyzer::analyze(ASTNode* root) { 
-    processNode(root);
-}
+void SemanticAnalyzer::analyze(ASTNode* root) { processNode(root); }
 
 bool SemanticAnalyzer::hasErrors() const { return false; }
 
@@ -31,20 +29,15 @@ void SemanticAnalyzer::checkFunctionDefinitions(
 void SemanticAnalyzer::processNode(ASTNode* node) {
     if (!node) throw std::runtime_error("Empty node!");
 
-    std::string globalScopeName = "global";
-
-    unsigned int procCounter = 0;
-
     switch (node->getNodeType()) {
         case PROGRAM_ALL_NODE: {
-            symbolTable.openScope(globalScopeName, ScopeType::GLOBAL);
             auto programAllNode =
                 ast::ASTNodeFactory::castNode<ast::ProgramAllNode>(node);
+            symbolTable.openScope(ScopeType::GLOBAL_SCOPE); // we can ignore returned message here bc if something goes wrong it will return exception not message at this point
             for (auto& proc : programAllNode->procedures) {
                 processNode(proc);
             }
             processNode(programAllNode->main);
-            symbolTable.closeScope();
             break;
         }
         case PROCEDURES_NODE: {
@@ -59,9 +52,8 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             break;
         }
         case MAIN_NODE: {
-            std::string mainScopeName = "main";
-            symbolTable.openScope(mainScopeName, ScopeType::MAIN);
             auto mainNode = ast::ASTNodeFactory::castNode<ast::MainNode>(node);
+            symbolTable.openScope(MAIN_SCOPE);
             processNode(mainNode->declarations);
             processNode(mainNode->commands);
             symbolTable.closeScope();
@@ -110,14 +102,6 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto forToNode =
                 ast::ASTNodeFactory::castNode<ast::ForToNode>(node);
             std::string pidentifier = forToNode->pidentifier;
-            // pidentfier cant be changed in for loop
-            Symbol symbol(semana::VARIABLE_NAME,
-                          semana::VariableType::FOR_ITERATOR, pidentifier);
-            auto validationMessage = symbolTable.insert(symbol);
-            if (validationMessage.errorType != ErrorType::GOOD) {
-                auto location = getLocation(node);
-                raiseError(validationMessage, location);
-            }
             processNode(forToNode->valueFrom);
             processNode(forToNode->valueTo);
             processNode(forToNode->commands);
@@ -127,14 +111,6 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto forDowntoNode =
                 ast::ASTNodeFactory::castNode<ast::ForDowntoNode>(node);
             std::string pidentifier = forDowntoNode->pidentifier;
-            // pidentfier cant be changed in for loop
-            Symbol symbol(semana::VARIABLE_NAME,
-                          semana::VariableType::FOR_ITERATOR, pidentifier);
-            auto validationMessage = symbolTable.insert(symbol);
-            if (validationMessage.errorType != ErrorType::GOOD) {
-                auto location = getLocation(node);
-                raiseError(validationMessage, location);
-            }
             processNode(forDowntoNode->valueFrom);
             processNode(forDowntoNode->valueTo);
             processNode(forDowntoNode->commands);
@@ -144,13 +120,8 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto procCallNode =
                 ast::ASTNodeFactory::castNode<ast::ProcCallNode>(node);
             std::string procName = procCallNode->pidentifier;
-            Symbol procSymbol(semana::PROCEDURE_NAME,
-                              semana::VariableType::PROCEDURE, procName);
-            auto validationMessage = symbolTable.validateSymbol(procSymbol);
-            if (validationMessage.errorType != ErrorType::GOOD) {
-                auto location = getLocation(node);
-                raiseError(validationMessage, location);
-            }
+            Symbol symbol(procName, PROCEDURE);
+            // validate here
             processNode(procCallNode->args);
             break;
         }
@@ -169,79 +140,48 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto procHeadNode =
                 ast::ASTNodeFactory::castNode<ast::ProcHeadNode>(node);
             auto procName = procHeadNode->pidentifier;
-            Symbol procSymbol(semana::PROCEDURE_NAME,
-                              semana::VariableType::PROCEDURE, procName);
-            auto validationMessage = symbolTable.insert(procSymbol);
-            if (validationMessage.errorType != ErrorType::GOOD) {
-                auto location = getLocation(node);
-                raiseError(validationMessage, location);
-            }
-            symbolTable.openScope(procName, ScopeType::PROCEDURE);
+            Symbol symbol(procName, PROCEDURE);
+            symbolTable.openScope(PROCEDURE_SCOPE);
+            symbolTable.addSymbol(symbol);
             processNode(procHeadNode->args_decl);
             break;
         }
         case DECLARATIONS_NODE: {
             auto declarationsNode =
                 ast::ASTNodeFactory::castNode<ast::DeclarationsNode>(node);
-            for (auto& pidentifier : declarationsNode->pidentifiers) {
-                Symbol varSymbol(semana::VARIABLE_NAME,
-                                 semana::VariableType::NUM, pidentifier);
-                auto validationMessage = symbolTable.insert(varSymbol);
-                if (validationMessage.errorType != ErrorType::GOOD) {
-                    auto location = getLocation(node);
-                    raiseError(validationMessage, location);
-                }
+            for(auto &array : declarationsNode->arrays)
+            {
+                Symbol symbol(array.pidentifier, ARRAY, array);
+                symbolTable.addSymbol(symbol);
             }
-            for (auto& Tpidentifier : declarationsNode->arrays) {
-                ast::array array = Tpidentifier;
-                Symbol arraySymbol(semana::ARRAY_NAME,
-                                   semana::VariableType::ARRAY, array);
-                auto validationMessage = symbolTable.insert(arraySymbol);
-                if (validationMessage.errorType != ErrorType::GOOD) {
-                    auto location = getLocation(node);
-                    raiseError(validationMessage, location);
-                }
+            for(auto &pidentifier : declarationsNode->pidentifiers)
+            {
+                Symbol symbol(pidentifier, VARIABLE);
+                symbolTable.addSymbol(symbol);
             }
             break;
         }
         case ARGS_DECL_NODE: {
             auto argsDeclNode =
                 ast::ASTNodeFactory::castNode<ast::ArgsDeclNode>(node);
-            for (auto& arg : argsDeclNode->pidentifiers) {
-                Symbol argSymbol(semana::VARIABLE_NAME,
-                                 semana::VariableType::NUM, arg);
-                auto validationMessage = symbolTable.insert(argSymbol);
-                if (validationMessage.errorType != ErrorType::GOOD) {
-                    auto location = getLocation(node);
-                    raiseError(validationMessage, location);
-                }
+            for(auto &pidentifer : argsDeclNode->pidentifiers)
+            {
+                Symbol symbol(pidentifer, VARIABLE);
+                symbolTable.addSymbol(symbol);
             }
-            for (auto& arg : argsDeclNode->Tpidentifiers) {
-                ast::array argArray = {arg, 0, 0};
-                Symbol argSymbol(semana::ARRAY_NAME,
-                                 semana::VariableType::ARRAY, arg);
-                auto validationMessage = symbolTable.insert(argSymbol);
-                if (validationMessage.errorType != ErrorType::GOOD) {
-                    auto location = getLocation(node);
-                    raiseError(validationMessage, location);
-                }
+            for(auto &Tpidentifier : argsDeclNode->Tpidentifiers)
+            {
+                Symbol symbol(Tpidentifier, ARRAY);
+                symbolTable.addSymbol(symbol);
             }
             break;
         }
         case ARGS_NODE: {
             auto argsNode = ast::ASTNodeFactory::castNode<ast::ArgsNode>(node);
-            for (auto& arg : argsNode->pidentifiers) {
-                Symbol argSymbol(semana::VARIABLE_NAME,
-                                 semana::VariableType::NUM, arg);
-                auto validationMessage = symbolTable.validateSymbol(argSymbol);
-                // validate wheter the type of the argument is correct
-                if (validationMessage.errorType == ErrorType::ITERATOR) {
-                    validationMessage = validateIterator(argsNode);
-                }
-                if (validationMessage.errorType != ErrorType::GOOD) {
-                    auto location = getLocation(node);
-                    raiseError(validationMessage, location);
-                }
+            for(auto &pidentifer : argsNode->pidentifiers)
+            {
+                Symbol symbol(pidentifer, VARIABLE);
+                symbolTable.addSymbol(symbol);
             }
             break;
         }
@@ -267,64 +207,40 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             if (valueNode->identifier.has_value()) {
                 processNode(valueNode->identifier.value());
             }
+            if(valueNode->num.has_value())
+            {
+                Symbol symbol(valueNode->num.value(), RVALUE);
+                /*symbolTable.addSymbol(symbol);*/
+                // validate here
+            }
             break;
         }
         case IDENTIFIER_NODE: {
             auto identifierNode =
                 ast::ASTNodeFactory::castNode<ast::IdentifierNode>(node);
-            // Process identifierNode if needed
-            if (identifierNode->pidentifier.has_value()) {
-                Symbol symbol(semana::VARIABLE_NAME, semana::VariableType::NUM,
-                              identifierNode->pidentifier.value());
-                auto validationMessage = symbolTable.validateSymbol(symbol);
-                if (validationMessage.errorType == ErrorType::ITERATOR) {
-                    validationMessage = validateIterator(identifierNode);
-                }
-                if (validationMessage.errorType != ErrorType::GOOD) {
-                    auto location = getLocation(node);
-                    raiseError(validationMessage, location);
-                }
-            } else if (identifierNode->Tpidentifier.has_value()) {
-                std::string pidentifier = identifierNode->Tpidentifier.value();
-                if (identifierNode->arrayNumIndex.has_value()) {
-                    // TODO: check if arrayIndex is in range
-                    int arrayIndex = identifierNode->arrayNumIndex.value();
-
-                    // here I use 0,0 as a placeholder for array range because I
-                    // don't have the information about the array range
-                    Symbol symbol(semana::ARRAY_NAME,
-                                  semana::VariableType::ARRAY,
-                                  ast::array{pidentifier, 0, 0});
-                    auto validationMessage = symbolTable.validateSymbol(symbol);
-                    if (validationMessage.errorType != ErrorType::GOOD) {
-                        auto location = getLocation(node);
-                        raiseError(validationMessage, location);
-                    }
-                } else if (identifierNode->arrayPidentifierIndex.has_value()) {
-                    std::string arrayIndex =
-                        identifierNode->arrayPidentifierIndex.value();
-                    Symbol symbol(semana::VARIABLE_NAME,
-                                  semana::VariableType::NUM, arrayIndex);
-                    auto validationMessage = symbolTable.validateSymbol(symbol);
-                    if (validationMessage.errorType == ErrorType::ITERATOR) {
-                        validationMessage = validateIterator(identifierNode);
-                    }
-                    if (validationMessage.errorType != ErrorType::GOOD) {
-                        auto location = getLocation(node);
-                        raiseError(validationMessage, location);
-                    }
-
-                    Symbol symbolArray(semana::ARRAY_NAME,
-                                       semana::VariableType::ARRAY,
-                                       ast::array{pidentifier, 0, 0});
-                    auto validationMessageArray =
-                        symbolTable.validateSymbol(symbolArray);
-
-                    if (validationMessageArray.errorType != ErrorType::GOOD) {
-                        auto location = getLocation(node);
-                        raiseError(validationMessageArray, location);
-                    }
-                }
+            if(identifierNode->pidentifier.has_value())
+            {
+                Symbol symbol(identifierNode->pidentifier.value(), VARIABLE);
+                /*symbolTable.addSymbol(symbol);*/
+                // validate here
+            }
+            if(identifierNode->Tpidentifier.has_value())
+            {
+                Symbol symbol(identifierNode->Tpidentifier.value(), ARRAY);
+                /*symbolTable.addSymbol(symbol);*/
+                // validate here
+            }
+            if(identifierNode->arrayNumIndex.has_value())
+            {
+                Symbol symbol(identifierNode->arrayNumIndex.value(), RVALUE);
+                /*symbolTable.addSymbol(symbol);*/
+                // validate here
+            }
+            if(identifierNode->arrayPidentifierIndex.has_value())
+            {
+                Symbol symbol(identifierNode->arrayPidentifierIndex.value(), VARIABLE);
+                /*symbolTable.addSymbol(symbol);*/
+                // validate here
             }
             break;
         }
@@ -389,11 +305,21 @@ void SemanticAnalyzer::raiseError(ValidationMessage& message,
                       << message.content << resetColorCode << std::endl;
             break;
         }
-        case ErrorType::ITERATOR: {
-            std::cerr << redColorCode << "Iterator: " << location
+        case ErrorType::UNINITIALIZED_VARIABLE: {
+            std::cerr << redColorCode << "Uninitialized variable: " << location
                       << message.content << resetColorCode << std::endl;
             break;
         }
+        case ErrorType::UNINITIALIZED_ARRAY: {
+            std::cerr << redColorCode << "Uninitialized array: " << location
+                      << message.content << resetColorCode << std::endl;
+            break;
+        }
+        /*case ErrorType::ITERATOR: {*/
+        /*    std::cerr << redColorCode << "Iterator: " << location*/
+        /*              << message.content << resetColorCode << std::endl;*/
+        /*    break;*/
+        /*}*/
         default:
             throw std::runtime_error("Unknown error type");
     }
@@ -415,7 +341,8 @@ ValidationMessage SemanticAnalyzer::validateIterator(ASTNode* node) {
                node->getNodeType() == FOR_DOWNTO_NODE;
     };
 
-    // store FOR_TO_NODE or FOR_DOWNTO_NODE node in stack and check if iterator is used in loop scope
+    // store FOR_TO_NODE or FOR_DOWNTO_NODE node in stack and check if iterator
+    // is used in loop scope
 
     return {ErrorType::GOOD, "Good"};
 }

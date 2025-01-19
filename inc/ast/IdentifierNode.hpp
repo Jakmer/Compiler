@@ -10,7 +10,7 @@ class IdentifierNode : public ASTNode {
    public:
     std::optional<std::string> pidentifier;
     std::optional<std::string> Tpidentifier;
-    std::optional<int> arrayNumIndex;
+    std::optional<std::string> arrayNumIndex;
     std::optional<std::string> arrayPidentifierIndex;
 
     IdentifierNode();

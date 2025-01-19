@@ -27,7 +27,7 @@ void DeclarationsNode::print(int indent) const {
     }
 }
 
-void DeclarationsNode::addArray(const std::string& pidentifier, int num1, int num2) {
+void DeclarationsNode::addArray(const std::string& pidentifier, const std::string& num1, const std::string& num2) {
     arrays.push_back({pidentifier, num1, num2});
 }
 

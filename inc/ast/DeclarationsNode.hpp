@@ -7,8 +7,8 @@ namespace ast {
 
 struct array {
     std::string pidentifier;
-    int num1;  // beggining
-    int num2;  // end
+    std::string num1;  // beggining
+    std::string num2;  // end
 
     bool operator==(const array& other) const {
         return pidentifier == pidentifier;
@@ -24,7 +24,7 @@ class DeclarationsNode : public ASTNode {
     virtual ~DeclarationsNode();
 
     void print(int indent = 0) const override;
-    void addArray(const std::string& pidentifier, int num1, int num2);
+    void addArray(const std::string& pidentifier, const std::string& num1, const std::string& num2) ;
     void addPidentifier(const std::string& pidentifier);
 };
 

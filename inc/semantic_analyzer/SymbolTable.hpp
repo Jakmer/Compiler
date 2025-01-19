@@ -1,85 +1,125 @@
+#ifndef SYMBOL_TABLE_HPP 
+#define SYMBOL_TABLE_HPP
+
 #include <iostream>
-#include <stack>
+#include <variant>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <variant>
-#include <vector>
+#include <stack>
 
 #include "DeclarationsNode.hpp"
+#include "ErrorMessages.hpp"
 
 namespace semana {
 
-enum class VariableType {
-    NUM,
-    ARRAY,
-    PROCEDURE,
-    MAIN,
-    UNDEFINED,
-    FOR_ITERATOR
-};
-
-enum ScopeType { GLOBAL, PROCEDURE, MAIN };
-
 enum SymbolType {
-    MAIN_NAME,
-    PROCEDURE_NAME,
-    VARIABLE_NAME,
-    ARRAY_NAME,
-    UNDEFINED
+    MAIN,
+    PROCEDURE,
+    VARIABLE,
+    ARRAY,
+    RVALUE,
+    ITERATOR,
+    UNDEFINED   // error
 };
 
 struct Symbol {
-    SymbolType symbolType;  // probably unnecessary
-    VariableType type;
-    std::variant<std::string, ast::array> name;
-
-    Symbol()
-        : symbolType(SymbolType::UNDEFINED),
-          type(VariableType::UNDEFINED),
-          name("undefined") {}
-    Symbol(SymbolType symbolType, VariableType type = VariableType::UNDEFINED,
-           std::variant<std::string, ast::array> name = "undefined")
-        : symbolType(symbolType), type(type), name(name) {}
-};
-
-struct Scope {
-    ScopeType scopeType;
+    SymbolType symbolType;
     std::string name;
-    std::vector<Symbol> symbols;
+    int address;    // we declare assembly address here (remember about array address)
+    std::variant<std::monostate ,std::string, ast::array> value;   // array cant be assigned whole at once so wa may only store symbol with one value at most
+    int scope;  // -1 - global, 0 - main, n >= 1 - procedure        !ONLY IN GLOBA CAN WE DEFINE FUNCTIONS
+
+    Symbol() = default;
+    Symbol(std::string &name, SymbolType symbolType) : name(name), symbolType(symbolType){}
+    Symbol(std::string &name, SymbolType symbolType,     std::variant<std::monostate ,std::string, ast::array> value) : name(name), symbolType(symbolType), value(value){}
 };
 
-enum ErrorType {
-    GOOD,
-    UNDECLARED_VARIABLE,
-    INCORRECT_ARRAY_RANGE,
-    DUPLICATE_DECLARATION,
-    UNDECLARED_PROCEDURE,
-    INCORRECT_ARGUMENTS,
-    UNDECLARED_ARRAY,
-    UNDECLARED_MAIN,
-    UNDECLARED_GLOBAL,
-    TYPE_MISMATCH,
-    RECURSIVE_CALL,
-    ITERATOR // when receive ITERATOR, we should check on AST whether is in RANGE
-};
-
-struct ValidationMessage {
-    ErrorType errorType;
-    std::string content;
+enum ScopeType {
+    GLOBAL_SCOPE = -1,
+    MAIN_SCOPE,
+    PROCEDURE_SCOPE,
+    NOT_ASSIGNED
 };
 
 class SymbolTable {
-   public:
+    public:
     SymbolTable() = default;
-    void printSymbols();
-    void openScope(std::string& name, ScopeType scopeType);
-    void closeScope();
-    ValidationMessage insert(const Symbol& symbol);
-    ValidationMessage validateSymbol(Symbol& symbol);
-    ValidationMessage validateDeclaration(const Symbol& symbol);
+    ValidationMessage openScope(ScopeType scopeType) {
 
-   private:
-    std::stack<Scope> scopeStack;
+        switch (scopeType) {
+            case GLOBAL_SCOPE: {
+                if(!scopes.empty())
+                    // Always open global scope before adding real scopes
+                    throw std::runtime_error("No GlobalScope defined!");
+                scopes.push(-1);    // -1 is reserved for global scope only
+                break;
+            }
+            case MAIN_SCOPE: {
+                if(scopes.top() != GLOBAL_SCOPE)
+                    return ValidationMessage(BAD_SCOPE, "Function can be declared only in global scope");
+                scopes.push(0);     // 0 is reserved for main scope only
+                break;
+            }
+            case PROCEDURE_SCOPE: {
+                if(scopes.top() != GLOBAL_SCOPE)
+                    return ValidationMessage(BAD_SCOPE, "Function can be declared only in global scope");
+                scopes.push(++noProcedures);
+                break;
+            }
+            default:
+                throw std::runtime_error("Undefined Scope");
+        }
+
+        return ValidationMessage(GOOD, "");
+    };
+
+    ValidationMessage closeScope() {
+       if(scopes.empty()) 
+            throw std::runtime_error("Cannot close empty scope!");
+
+        scopes.pop();
+
+        if(scopes.top() != GLOBAL_SCOPE)
+            return ValidationMessage(BAD_SCOPE, "After closing scope we should be back in global scope!");
+
+        return ValidationMessage(GOOD, "");
+    }
+
+    ValidationMessage addSymbol(Symbol &symbol) {
+        symbol.scope = scopes.top();
+
+        auto validatationMessage = validateSymbol(symbol);
+        if(validatationMessage.errorType != GOOD)
+            return validatationMessage;
+
+        // TODO assign address here
+        symbol.address = 0;
+        
+        auto symbolUniqueName = getSymbolUniqeName(symbol.name);
+        symbols[symbolUniqueName] = symbol;
+        return ValidationMessage(GOOD, "");
+    }
+
+    void printSymbols() {};
+
+    private:
+
+    ValidationMessage validateSymbol(Symbol& symbol){
+        auto symbolUniqueName = getSymbolUniqeName(symbol.name);
+
+        return ValidationMessage(GOOD, "");
+    }
+    
+    std::string getSymbolUniqeName(std::string &name){
+        return std::to_string(scopes.top()) + name;
+    }
+
+    std::stack<int> scopes; // only for scope checking
+    std::unordered_map<std::string, Symbol> symbols;    // name and symbol
+    int noProcedures = 0;
 };
 
 }  // namespace semana
+
+#endif // SYMBOL_TABLE_HPP
