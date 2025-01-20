@@ -20,6 +20,7 @@ enum SymbolType {
     ARRAY,
     RVALUE,
     ITERATOR,
+    ARRAY_ELEMENT,
     UNDEFINED   // error
 };
 
@@ -29,10 +30,11 @@ struct Symbol {
     int address;    // we declare assembly address here (remember about array address)
     std::variant<std::monostate ,std::string, ast::array> value;   // array cant be assigned whole at once so wa may only store symbol with one value at most
     int scope;  // -1 - global, 0 - main, n >= 1 - procedure        !ONLY IN GLOBA CAN WE DEFINE FUNCTIONS
+    bool isInitalized;
 
     Symbol() = default;
-    Symbol(std::string &name, SymbolType symbolType) : name(name), symbolType(symbolType){}
-    Symbol(std::string &name, SymbolType symbolType,     std::variant<std::monostate ,std::string, ast::array> value) : name(name), symbolType(symbolType), value(value){}
+    Symbol(std::string &name, SymbolType symbolType) : name(name), symbolType(symbolType), isInitalized(false){}
+    Symbol(std::string &name, SymbolType symbolType,     std::variant<std::monostate ,std::string, ast::array> value) : name(name), symbolType(symbolType), value(value), isInitalized(false){}
 };
 
 enum ScopeType {
@@ -41,6 +43,26 @@ enum ScopeType {
     PROCEDURE_SCOPE,
     NOT_ASSIGNED
 };
+
+inline std::string toString(const SymbolType &symbolType)
+{
+    switch (symbolType) {
+        case SymbolType::VARIABLE:
+            return "Variable";
+        case SymbolType::PROCEDURE:
+            return "Procedure";
+        case SymbolType::ARRAY:
+            return "Array";
+        case SymbolType::RVALUE:
+            return "Rvalue";
+        case SymbolType::ITERATOR:
+            return "Iterator";
+        case SymbolType::ARRAY_ELEMENT:
+            return "Array element";
+        default:
+            throw std::invalid_argument("Unkonw symbol type");
+    }
+}
 
 class SymbolTable {
     public:
@@ -89,30 +111,87 @@ class SymbolTable {
     ValidationMessage addSymbol(Symbol &symbol) {
         symbol.scope = scopes.top();
 
-        auto validatationMessage = validateSymbol(symbol);
+        auto validatationMessage = validateDeclaration(symbol);
         if(validatationMessage.errorType != GOOD)
             return validatationMessage;
 
         // TODO assign address here
         symbol.address = 0;
         
-        auto symbolUniqueName = getSymbolUniqeName(symbol.name);
+        auto symbolUniqueName = getSymbolUniqeName(symbol);
         symbols[symbolUniqueName] = symbol;
         return ValidationMessage(GOOD, "");
     }
 
     void printSymbols() {};
 
-    private:
+    ValidationMessage validateSymbol(Symbol& symbol, bool isAssignment){
+        auto symbolUniqueName = getSymbolUniqeName(symbol);
 
-    ValidationMessage validateSymbol(Symbol& symbol){
-        auto symbolUniqueName = getSymbolUniqeName(symbol.name);
+        auto mapSymbol = symbols.find(symbolUniqueName);
+        if(mapSymbol == symbols.end())
+            return ValidationMessage(UNDECLARED_VARIABLE, symbol.name);
+
+        auto declaredSymbol = mapSymbol->second;
+    
+        switch (symbol.symbolType) {
+            case MAIN: {
+                break;
+            }
+            case PROCEDURE: {
+                if(declaredSymbol.symbolType != symbol.symbolType)
+                    return ValidationMessage(TYPE_MISMATCH, "Expected: "+toString(declaredSymbol.symbolType)+ " Received: "+toString(symbol.symbolType));
+                break;
+            }
+            case VARIABLE: {
+                if(declaredSymbol.symbolType == ARRAY) 
+                    return ValidationMessage(TYPE_MISMATCH, "Expected: "+toString(declaredSymbol.symbolType)+ " Received: "+toString(symbol.symbolType));
+                break;
+            }
+            case ARRAY: {
+                if(!isAssignment && declaredSymbol.symbolType != ARRAY) 
+                    return ValidationMessage(TYPE_MISMATCH, "Expected: "+toString(declaredSymbol.symbolType)+ " Received: "+toString(symbol.symbolType));
+                if(isAssignment)
+                {
+                    // we can treat it like variable in this case
+                }
+                break;
+            }
+            case RVALUE: {
+                if(declaredSymbol.symbolType == ARRAY) 
+                    return ValidationMessage(TYPE_MISMATCH, "Expected: "+toString(declaredSymbol.symbolType)+ " Received: "+toString(symbol.symbolType));
+                break;
+            }
+            case ITERATOR: {
+                if(declaredSymbol.symbolType == ARRAY) 
+                    return ValidationMessage(TYPE_MISMATCH, "Expected: "+toString(declaredSymbol.symbolType)+ " Received: "+toString(symbol.symbolType));
+                break;
+            }
+            case UNDEFINED: {
+                throw std::runtime_error("Undefined symbol type!");
+            }
+        }
 
         return ValidationMessage(GOOD, "");
     }
     
-    std::string getSymbolUniqeName(std::string &name){
-        return std::to_string(scopes.top()) + name;
+    private:
+
+    ValidationMessage validateDeclaration(Symbol& symbol){
+        auto symbolUniqueName = getSymbolUniqeName(symbol);
+
+        return ValidationMessage(GOOD, "");
+    }
+
+    std::string getSymbolUniqeName(Symbol &symbol){
+        std::string uniqueName;
+
+        if(symbol.symbolType == PROCEDURE)
+            uniqueName = "procedure" + symbol.name;
+        else
+            uniqueName = std::to_string(scopes.top()) + symbol.name;
+
+        return uniqueName;
     }
 
     std::stack<int> scopes; // only for scope checking

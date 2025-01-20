@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ASTNode.hpp"
+#include "ErrorMessages.hpp"
 #include "SymbolTable.hpp"
 
 namespace semana {
@@ -15,7 +16,7 @@ class SemanticAnalyzer {
     SemanticAnalyzer(std::string &filename);
     ~SemanticAnalyzer();
 
-    void analyze(ASTNode* root);
+    ExitCode analyze(ASTNode* root);
     bool hasErrors() const;
     const std::vector<std::string>& getErrors() const;
 
@@ -32,6 +33,8 @@ class SemanticAnalyzer {
     SymbolTable symbolTable;
     std::string filename;
     ASTNode* astRoot;
+    bool isAssignment;
+    ExitCode exitCode;
 };
 
 }  // namespace semana

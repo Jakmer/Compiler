@@ -38,3 +38,8 @@ set_target_properties(compiler_debug PROPERTIES
     COMPILE_FLAGS "-ggdb3 -O0"
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/debug
 )
+
+add_custom_target(test
+    COMMAND ${CMAKE_SOURCE_DIR}/test/start_testing.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS compiler
+)

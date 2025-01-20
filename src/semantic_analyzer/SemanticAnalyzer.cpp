@@ -1,18 +1,23 @@
 #include <stdexcept>
 
 #include "ASTNodeFactory.hpp"
+#include "ErrorMessages.hpp"
 #include "SemanticAnalzyer.hpp"
+#include "SymbolTable.hpp"
 
 namespace semana {
 
-SemanticAnalyzer::SemanticAnalyzer(std::string& filename) {
+SemanticAnalyzer::SemanticAnalyzer(std::string& filename) : exitCode(SUCCESS) {
     this->filename = filename;
     this->astRoot = nullptr;
 }
 
 SemanticAnalyzer::~SemanticAnalyzer() {}
 
-void SemanticAnalyzer::analyze(ASTNode* root) { processNode(root); }
+ExitCode SemanticAnalyzer::analyze(ASTNode* root) { 
+    processNode(root); 
+    return exitCode;
+}
 
 bool SemanticAnalyzer::hasErrors() const { return false; }
 
@@ -70,7 +75,9 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
         case ASSIGNMENT_NODE: {
             auto assignmentNode =
                 ast::ASTNodeFactory::castNode<ast::AssignmentNode>(node);
+            isAssignment = true;
             processNode(assignmentNode->identifier);
+            isAssignment = false;
             processNode(assignmentNode->expression);
             break;
         }
@@ -102,6 +109,13 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto forToNode =
                 ast::ASTNodeFactory::castNode<ast::ForToNode>(node);
             std::string pidentifier = forToNode->pidentifier;
+            Symbol symbol(pidentifier, ITERATOR);
+            auto msg = symbolTable.addSymbol(symbol);
+            if(msg.errorType != GOOD)
+            {
+                auto location = getLocation(forToNode);
+                raiseError(msg, location);
+            }
             processNode(forToNode->valueFrom);
             processNode(forToNode->valueTo);
             processNode(forToNode->commands);
@@ -111,6 +125,13 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto forDowntoNode =
                 ast::ASTNodeFactory::castNode<ast::ForDowntoNode>(node);
             std::string pidentifier = forDowntoNode->pidentifier;
+            Symbol symbol(pidentifier, ITERATOR);
+            auto msg = symbolTable.addSymbol(symbol);
+            if(msg.errorType != GOOD)
+            {
+                auto location = getLocation(forDowntoNode);
+                raiseError(msg, location);
+            }
             processNode(forDowntoNode->valueFrom);
             processNode(forDowntoNode->valueTo);
             processNode(forDowntoNode->commands);
@@ -121,7 +142,12 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
                 ast::ASTNodeFactory::castNode<ast::ProcCallNode>(node);
             std::string procName = procCallNode->pidentifier;
             Symbol symbol(procName, PROCEDURE);
-            // validate here
+            auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+            if(msg.errorType != GOOD)
+            {
+                auto location = getLocation(procCallNode);
+                raiseError(msg, location);
+            }
             processNode(procCallNode->args);
             break;
         }
@@ -210,8 +236,12 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             if(valueNode->num.has_value())
             {
                 Symbol symbol(valueNode->num.value(), RVALUE);
-                /*symbolTable.addSymbol(symbol);*/
-                // validate here
+                auto msg = symbolTable.addSymbol(symbol);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(valueNode);
+                    raiseError(msg, location);
+                }
             }
             break;
         }
@@ -221,26 +251,43 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             if(identifierNode->pidentifier.has_value())
             {
                 Symbol symbol(identifierNode->pidentifier.value(), VARIABLE);
-                /*symbolTable.addSymbol(symbol);*/
-                // validate here
+
+                auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(identifierNode);
+                    raiseError(msg, location);
+                }
             }
             if(identifierNode->Tpidentifier.has_value())
             {
-                Symbol symbol(identifierNode->Tpidentifier.value(), ARRAY);
-                /*symbolTable.addSymbol(symbol);*/
-                // validate here
+                Symbol symbol(identifierNode->Tpidentifier.value(), ARRAY_ELEMENT);
+                auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(identifierNode);
+                    raiseError(msg, location);
+                }
             }
             if(identifierNode->arrayNumIndex.has_value())
             {
                 Symbol symbol(identifierNode->arrayNumIndex.value(), RVALUE);
-                /*symbolTable.addSymbol(symbol);*/
-                // validate here
+                auto msg = symbolTable.addSymbol(symbol);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(identifierNode);
+                    raiseError(msg, location);
+                }
             }
             if(identifierNode->arrayPidentifierIndex.has_value())
             {
                 Symbol symbol(identifierNode->arrayPidentifierIndex.value(), VARIABLE);
-                /*symbolTable.addSymbol(symbol);*/
-                // validate here
+                auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(identifierNode);
+                    raiseError(msg, location);
+                }
             }
             break;
         }
@@ -253,6 +300,8 @@ void SemanticAnalyzer::raiseError(ValidationMessage& message,
                                   std::string& location) {
     const std::string redColorCode = "\033[31m";
     const std::string resetColorCode = "\033[0m";
+
+    exitCode = SEMANTIC_ERROR;
 
     switch (message.errorType) {
         case ErrorType::UNDECLARED_VARIABLE: {

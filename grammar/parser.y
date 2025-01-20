@@ -104,7 +104,6 @@ commands:
 
 command:
     identifier ASSIGN expression SEMICOLON {
-        std::cout<< "Location a: " <<@4.first_line<<" "<<" "<<@4.last_line<<" "<<@4.first_column<<" "<<@4.last_column<<std::endl;
         ast::IdentifierNode* identifierNode = dynamic_cast<ast::IdentifierNode*>($1);
         ast::ExpressionNode* expressionNode = dynamic_cast<ast::ExpressionNode*>($3);
         ast::AssignmentNode* commandNode = new ast::AssignmentNode();

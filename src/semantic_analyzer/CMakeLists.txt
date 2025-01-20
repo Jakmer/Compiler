@@ -1,6 +1,7 @@
 set(SOURCES
     SemanticAnalyzer.cpp
     SymbolTable.cpp
+    ErrorMessages.cpp
 )
 
 add_library(semana_lib

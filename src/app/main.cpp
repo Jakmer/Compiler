@@ -34,7 +34,8 @@ int main(int argc, char** argv) {
     /*std::cout << "AST:" << '\n';*/
     /*astRoot->print();*/
     semana::SemanticAnalyzer semAnalyzer(filename);
-    semAnalyzer.analyze(astRoot);
+    int exitCode = semana::ExitCode::SUCCESS;
+    exitCode = semAnalyzer.analyze(astRoot);
 
-    return 0;
+    return exitCode;
 }

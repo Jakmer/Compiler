@@ -2,8 +2,18 @@
 #define ERROR_MESSAGES_HPP
 
 #include <string>
+#include <ostream>
 
 namespace semana {
+
+enum ExitCode{
+    SUCCESS = 0,
+    SEMANTIC_ERROR = 1,
+    LEXICAL_ERROR = 2,
+    SYNTAX_ERROR = 3,
+    INTERNAL_ERROR = 4,
+    UNDEFINED_ERROR = 5
+};
 
 enum ErrorType { GOOD,
     UNDECLARED_VARIABLE,
@@ -29,6 +39,8 @@ struct ValidationMessage {
     
     ValidationMessage(ErrorType errorType, std::string content) : errorType(errorType), content(content) {}
 };
+
+std::ostream& operator<<(std::ostream& os, const ErrorType& error);
 
 }
 
