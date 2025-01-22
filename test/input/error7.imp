@@ -1,0 +1,16 @@
+# error: undefined procedure pa in line 6
+PROCEDURE pa(T a, b) IS
+ c[0:5],d
+BEGIN
+  d:=b;
+  pa(c,d);
+  a[d]:=c[d]+a[b];
+END
+
+PROGRAM IS
+ a[1:10],b
+BEGIN
+  READ b;
+  pa(a,b);
+  WRITE a[b];
+END

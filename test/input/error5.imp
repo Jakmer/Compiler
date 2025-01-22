@@ -1,0 +1,15 @@
+# error: incorrect parameter for procedure pa in line 13
+PROCEDURE pa(T a, b) IS
+ c[0:5],d
+BEGIN
+  d:=b;
+  a[d]:=c[d]+a[b];
+END
+
+PROGRAM IS
+ a[1:10],b
+BEGIN
+  READ b;
+  pa(b,a);
+  WRITE a[b];
+END

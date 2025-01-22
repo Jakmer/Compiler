@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
     semana::SemanticAnalyzer semAnalyzer(filename);
     int exitCode = semana::ExitCode::SUCCESS;
     exitCode = semAnalyzer.analyze(astRoot);
+    std::cout << "Semantic analysis finished with exit code " << exitCode << ".\n";
 
     return exitCode;
 }

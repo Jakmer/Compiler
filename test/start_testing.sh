@@ -7,25 +7,31 @@ if [ "$#" -ne 1 ]; then
 fi
 
 project_dir=$1
-data_dir="$project_dir/data"
-test_dir="$data_dir/testy"
+input_dir="$project_dir/test/input"
+output_dir="$project_dir/test/output"
+log_dir="$project_dir/test/log"
 file_extension=".imp"
-output_dir="$data_dir/output"
+result_file_extension=".mr"
+log_file_extension=".log"
 
 if [ ! -d "$output_dir" ]; then
     mkdir -p "$output_dir"
 fi
 
+if [ ! -d "$log_dir" ]; then
+    mkdir -p "$log_dir"
+fi
+
 run_cmd="$project_dir/build/compiler"
 
 # Find all the test files
-test_files=$(find "$data_dir" -name "*$file_extension")
+test_files=$(find "$input_dir" -name "*$file_extension")
 
 # List of all the test files
 echo "----------------------------------------"
 echo "Test Files:"
 echo "----------------------------------------"
-for test_file in $data_dir
+for test_file in $input_dir
 do
     echo "$test_file"
 done
@@ -40,7 +46,7 @@ run_test() {
     local output_file="$2"
 
     echo "Running test case: $run_cmd $test_file $output_file"
-    $run_cmd "$test_file" "$output_file" > "$output_dir/$(basename $test_file).log"
+    $run_cmd "$test_file" "$output_file" &> "$log_dir/$(basename "$test_file")$log_file_extension"
     
     local exit_code=$?
     total_tests=$((total_tests + 1))
@@ -74,7 +80,7 @@ main() {
 
     for test_file in $test_files
     do
-        output_file="$output_dir/tested_$(basename $test_file).mr"
+        output_file="$output_dir/$(basename "$test_file")$result_file_extension"
         run_test "$test_file" "$output_file" 
     done
 

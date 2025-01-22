@@ -1,0 +1,10 @@
+# error: attempt to modify the iterator of a FOR loop in line 8
+PROGRAM IS
+ a,b
+BEGIN
+  READ a;
+  READ b;
+  FOR i FROM a TO b DO
+    i:=1;
+  ENDFOR
+END

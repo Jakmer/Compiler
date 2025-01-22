@@ -5,6 +5,8 @@
 .vscode
 build/
 .cache/
+output/
+log/
 *.slo
 *.lo
 *.o
