@@ -33,7 +33,7 @@ class SemanticAnalyzer {
     SymbolTable symbolTable;
     std::string filename;
     ASTNode* astRoot;
-    bool isAssignment;
+    RuntimeParams runtimeParams;
     ExitCode exitCode;
 };
 

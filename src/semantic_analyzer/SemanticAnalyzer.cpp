@@ -10,6 +10,12 @@ namespace semana {
 SemanticAnalyzer::SemanticAnalyzer(std::string& filename) : exitCode(SUCCESS) {
     this->filename = filename;
     this->astRoot = nullptr;
+    this->runtimeParams.isAssignment = false;
+    this->runtimeParams.isForLoopScope = false;
+    this->runtimeParams.isProcedureDeclaration = false;
+    this->runtimeParams.procCall.isProcedureCall = false;
+    this->runtimeParams.procCall.latestProcedureName = "";
+    this->runtimeParams.procCall.noArg = 0;
 }
 
 SemanticAnalyzer::~SemanticAnalyzer() {}
@@ -75,9 +81,9 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
         case ASSIGNMENT_NODE: {
             auto assignmentNode =
                 ast::ASTNodeFactory::castNode<ast::AssignmentNode>(node);
-            isAssignment = true;
+            runtimeParams.isAssignment = true;
             processNode(assignmentNode->identifier);
-            isAssignment = false;
+            runtimeParams.isAssignment = false;
             processNode(assignmentNode->expression);
             break;
         }
@@ -110,11 +116,18 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
                 ast::ASTNodeFactory::castNode<ast::ForToNode>(node);
             std::string pidentifier = forToNode->pidentifier;
             Symbol symbol(pidentifier, ITERATOR);
-            auto msg = symbolTable.addSymbol(symbol);
-            if(msg.errorType != GOOD)
+            bool isValidated = false;
+            auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
+            if(msg.errorType==GOOD)
+                isValidated = true;
+            if(!isValidated)
             {
-                auto location = getLocation(forToNode);
-                raiseError(msg, location);
+                msg = symbolTable.addSymbol(symbol, runtimeParams);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(forToNode);
+                    raiseError(msg, location);
+                }
             }
             processNode(forToNode->valueFrom);
             processNode(forToNode->valueTo);
@@ -126,11 +139,18 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
                 ast::ASTNodeFactory::castNode<ast::ForDowntoNode>(node);
             std::string pidentifier = forDowntoNode->pidentifier;
             Symbol symbol(pidentifier, ITERATOR);
-            auto msg = symbolTable.addSymbol(symbol);
-            if(msg.errorType != GOOD)
+            bool isValidated = false;
+            auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
+            if(msg.errorType==GOOD)
+                isValidated = true;
+            if(!isValidated)
             {
-                auto location = getLocation(forDowntoNode);
-                raiseError(msg, location);
+                msg = symbolTable.addSymbol(symbol, runtimeParams);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(forDowntoNode);
+                    raiseError(msg, location);
+                }
             }
             processNode(forDowntoNode->valueFrom);
             processNode(forDowntoNode->valueTo);
@@ -142,18 +162,24 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
                 ast::ASTNodeFactory::castNode<ast::ProcCallNode>(node);
             std::string procName = procCallNode->pidentifier;
             Symbol symbol(procName, PROCEDURE);
-            auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+            auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
             if(msg.errorType != GOOD)
             {
                 auto location = getLocation(procCallNode);
                 raiseError(msg, location);
             }
+            runtimeParams.procCall.isProcedureCall = true;
+            runtimeParams.procCall.latestProcedureName = procName;
+            runtimeParams.procCall.noArg = 0;
             processNode(procCallNode->args);
+            runtimeParams.procCall.isProcedureCall = false;
             break;
         }
         case READ_NODE: {
             auto readNode = ast::ASTNodeFactory::castNode<ast::ReadNode>(node);
+            runtimeParams.isAssignment = true;
             processNode(readNode->identifier);
+            runtimeParams.isAssignment = false;
             break;
         }
         case WRITE_NODE: {
@@ -168,8 +194,16 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto procName = procHeadNode->pidentifier;
             Symbol symbol(procName, PROCEDURE);
             symbolTable.openScope(PROCEDURE_SCOPE);
-            symbolTable.addSymbol(symbol);
+            auto msg = symbolTable.addSymbol(symbol, runtimeParams);
+            if(msg.errorType != GOOD)
+            {
+                auto location = getLocation(procHeadNode);
+                raiseError(msg, location);
+            }
+            runtimeParams.isProcedureDeclaration = true;
+            runtimeParams.procCall.latestProcedureName = procName;
             processNode(procHeadNode->args_decl);
+            runtimeParams.isProcedureDeclaration = false;
             break;
         }
         case DECLARATIONS_NODE: {
@@ -178,12 +212,22 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             for(auto &array : declarationsNode->arrays)
             {
                 Symbol symbol(array.pidentifier, ARRAY, array);
-                symbolTable.addSymbol(symbol);
+                auto msg = symbolTable.addSymbol(symbol, runtimeParams);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(declarationsNode);
+                    raiseError(msg, location);
+                }
             }
             for(auto &pidentifier : declarationsNode->pidentifiers)
             {
                 Symbol symbol(pidentifier, VARIABLE);
-                symbolTable.addSymbol(symbol);
+                auto msg = symbolTable.addSymbol(symbol, runtimeParams);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(declarationsNode);
+                    raiseError(msg, location);
+                }
             }
             break;
         }
@@ -193,12 +237,22 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             for(auto &pidentifer : argsDeclNode->pidentifiers)
             {
                 Symbol symbol(pidentifer, VARIABLE);
-                symbolTable.addSymbol(symbol);
+                auto msg = symbolTable.addSymbol(symbol, runtimeParams);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(argsDeclNode);
+                    raiseError(msg, location);
+                }
             }
             for(auto &Tpidentifier : argsDeclNode->Tpidentifiers)
             {
                 Symbol symbol(Tpidentifier, ARRAY);
-                symbolTable.addSymbol(symbol);
+                auto msg = symbolTable.addSymbol(symbol, runtimeParams);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(argsDeclNode);
+                    raiseError(msg, location);
+                }
             }
             break;
         }
@@ -206,8 +260,14 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto argsNode = ast::ASTNodeFactory::castNode<ast::ArgsNode>(node);
             for(auto &pidentifer : argsNode->pidentifiers)
             {
-                Symbol symbol(pidentifer, VARIABLE);
-                symbolTable.addSymbol(symbol);
+                Symbol symbol(pidentifer, PROCEDURE_ARG);
+                auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
+                if(msg.errorType != GOOD)
+                {
+                    auto location = getLocation(argsNode);
+                    raiseError(msg, location);
+                }
+                runtimeParams.procCall.noArg++;
             }
             break;
         }
@@ -236,7 +296,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             if(valueNode->num.has_value())
             {
                 Symbol symbol(valueNode->num.value(), RVALUE);
-                auto msg = symbolTable.addSymbol(symbol);
+                auto msg = symbolTable.addSymbol(symbol, runtimeParams);
                 if(msg.errorType != GOOD)
                 {
                     auto location = getLocation(valueNode);
@@ -252,7 +312,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             {
                 Symbol symbol(identifierNode->pidentifier.value(), VARIABLE);
 
-                auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+                auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
                 if(msg.errorType != GOOD)
                 {
                     auto location = getLocation(identifierNode);
@@ -262,7 +322,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             if(identifierNode->Tpidentifier.has_value())
             {
                 Symbol symbol(identifierNode->Tpidentifier.value(), ARRAY_ELEMENT);
-                auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+                auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
                 if(msg.errorType != GOOD)
                 {
                     auto location = getLocation(identifierNode);
@@ -272,7 +332,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             if(identifierNode->arrayNumIndex.has_value())
             {
                 Symbol symbol(identifierNode->arrayNumIndex.value(), RVALUE);
-                auto msg = symbolTable.addSymbol(symbol);
+                auto msg = symbolTable.addSymbol(symbol, runtimeParams);
                 if(msg.errorType != GOOD)
                 {
                     auto location = getLocation(identifierNode);
@@ -282,12 +342,16 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             if(identifierNode->arrayPidentifierIndex.has_value())
             {
                 Symbol symbol(identifierNode->arrayPidentifierIndex.value(), VARIABLE);
-                auto msg = symbolTable.validateSymbol(symbol, isAssignment);
+                symbol.isArrayIndex = true;
+                auto isAssignment = runtimeParams.isAssignment;
+                runtimeParams.isAssignment = false;
+                auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
                 if(msg.errorType != GOOD)
                 {
                     auto location = getLocation(identifierNode);
                     raiseError(msg, location);
                 }
+                runtimeParams.isAssignment = isAssignment;
             }
             break;
         }
@@ -361,6 +425,16 @@ void SemanticAnalyzer::raiseError(ValidationMessage& message,
         }
         case ErrorType::UNINITIALIZED_ARRAY: {
             std::cerr << redColorCode << "Uninitialized array: " << location
+                      << message.content << resetColorCode << std::endl;
+            break;
+        }
+        case ErrorType::ITERATOR_MODIFICATION: {
+            std::cerr << redColorCode << "Modifying iterator: " << location
+                      << message.content << resetColorCode << std::endl;
+            break;
+        }
+        case ErrorType::REDEFINTION: {
+            std::cerr << redColorCode << "Redefinition: " << location
                       << message.content << resetColorCode << std::endl;
             break;
         }

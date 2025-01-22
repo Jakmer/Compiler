@@ -30,6 +30,7 @@ enum ErrorType { GOOD,
     UNINITIALIZED_ARRAY,
     REDEFINTION,
     BAD_SCOPE,
+    ITERATOR_MODIFICATION
     /*ITERATOR // when receive ITERATOR, we should check on AST whether is in RANGE*/
 };
 
