@@ -1,13 +1,13 @@
 #ifndef SEMANTIC_ANALYZER_HPP
 #define SEMANTIC_ANALYZER_HPP
 
-#include <map>
 #include <string>
 #include <vector>
 
 #include "ASTNode.hpp"
 #include "ErrorMessages.hpp"
 #include "SymbolTable.hpp"
+#include "Context.hpp"
 
 namespace semana {
 
@@ -16,7 +16,7 @@ class SemanticAnalyzer {
     SemanticAnalyzer(std::string &filename);
     ~SemanticAnalyzer();
 
-    ExitCode analyze(ASTNode* root);
+    ExitCode analyze(compiler::Context &context);
     bool hasErrors() const;
     const std::vector<std::string>& getErrors() const;
 

@@ -11,6 +11,7 @@ add_library(semana_lib
 target_include_directories(semana_lib PUBLIC 
   ${CMAKE_SOURCE_DIR}/inc/semantic_analyzer
   ${CMAKE_SOURCE_DIR}/inc/ast
+  ${CMAKE_SOURCE_DIR}/inc/compiler_ifc
 )
 
 add_library(semana_lib_debug 
@@ -20,6 +21,7 @@ add_library(semana_lib_debug
 target_include_directories(semana_lib_debug PUBLIC 
     ${CMAKE_SOURCE_DIR}/inc/semantic_analyzer
     ${CMAKE_SOURCE_DIR}/inc/ast
+    ${CMAKE_SOURCE_DIR}/inc/compiler_ifc
 )
 
 set_target_properties(semana_lib_debug PROPERTIES

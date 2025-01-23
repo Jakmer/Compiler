@@ -3,9 +3,10 @@
 #include <fstream>
 #include <iostream>
 
+#include "ErrorMessages.hpp"
 #include "Parser.hpp"
 #include "ProgramAllNode.hpp"
-#include "SemanticAnalzyer.hpp"
+#include "CompilerInterface.hpp"
 
 static yyFlexLexer lexer;
 
@@ -19,8 +20,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::string filename = argv[1];
-    std::ifstream file(filename);
+    std::string inputFilename = argv[1];
+    std::string outputFilename = argv[2];
+    std::ifstream file(inputFilename);
     if (!file.is_open()) {
         std::cerr << "Could not open file " << argv[1] << "\n";
         return 1;
@@ -31,12 +33,11 @@ int main(int argc, char** argv) {
     std::cout << "Starting parser ...\n";
     int parseResult = yyparse();
     std::cout << "Parser finished with exit code " << parseResult << ".\n";
-    /*std::cout << "AST:" << '\n';*/
-    /*astRoot->print();*/
-    semana::SemanticAnalyzer semAnalyzer(filename);
-    int exitCode = semana::ExitCode::SUCCESS;
-    exitCode = semAnalyzer.analyze(astRoot);
-    std::cout << "Semantic analysis finished with exit code " << exitCode << ".\n";
+
+    std::cout << "Starting compiler ...\n";
+    compiler::Compiler compiler;
+    semana::ExitCode exitCode = compiler.compile(astRoot, inputFilename, outputFilename);
+    std::cout << "Compiler finished with exit code " << exitCode << ".\n";
 
     return exitCode;
 }

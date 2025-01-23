@@ -20,8 +20,9 @@ SemanticAnalyzer::SemanticAnalyzer(std::string& filename) : exitCode(SUCCESS) {
 
 SemanticAnalyzer::~SemanticAnalyzer() {}
 
-ExitCode SemanticAnalyzer::analyze(ASTNode* root) { 
-    processNode(root); 
+ExitCode SemanticAnalyzer::analyze(compiler::Context &context) { 
+    processNode(context.astRoot); 
+    context.symbolTable = symbolTable;
     return exitCode;
 }
 
