@@ -7,6 +7,9 @@ build/
 .cache/
 output/
 log/
+valgrind_log/
+valgrind_output/
+
 *.slo
 *.lo
 *.o

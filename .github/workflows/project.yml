@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y flex bison build-essential libfl-dev
+        sudo apt-get install -y flex bison build-essential libfl-dev valgrind
 
     - name: Set up CMake
       uses: lukka/get-cmake@latest
@@ -35,4 +35,9 @@ jobs:
       run: |
         cd build
         make test
+
+    - name: Run valgrind tests
+      run: |
+        cd build
+        make valgrind_test
 

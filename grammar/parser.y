@@ -167,6 +167,7 @@ command:
         forStatementNode->commands = commandsNode;
 
         $$ = forStatementNode;
+        free($2);
     }
     | FOR pidentifier FROM value DOWNTO value DO commands ENDFOR {
         std::string identifier = $2;
@@ -181,6 +182,7 @@ command:
         forStatementNode->commands = commandsNode;
 
         $$ = forStatementNode;
+        free($2);
     }
     | proc_call SEMICOLON {
         ast::ProcCallNode* procCallNode = dynamic_cast<ast::ProcCallNode*>($1);
@@ -207,6 +209,7 @@ proc_head:
         procHeadNode->setPosition(@1.first_line, @1.first_column);
         procHeadNode->args_decl = dynamic_cast<ast::ArgsDeclNode*>($3);
         $$ = procHeadNode;
+        free($1);
     }
     ;
 
@@ -217,6 +220,7 @@ proc_call:
         procCallNode->setPosition(@1.first_line, @1.first_column);
         procCallNode->args = dynamic_cast<ast::ArgsNode*>($3);
         $$ = procCallNode;
+        free($1);
     }
     ;
 
@@ -226,6 +230,7 @@ declarations:
         declarationsNode->pidentifiers.push_back($3);   // TODO: Add more positions for each identifier
         declarationsNode->setPosition(@3.first_line, @3.first_column);
         $$ = declarationsNode;
+        free($3);
     }
     | declarations COMMA pidentifier LBRACKET num COLON num RBRACKET {
         ast::DeclarationsNode* declarationsNode = dynamic_cast<ast::DeclarationsNode*>($1);
@@ -233,12 +238,16 @@ declarations:
         declarationsNode->arrays.push_back(arr);
         declarationsNode->setPosition(@3.first_line, @3.first_column);
         $$ = declarationsNode;
+        free($3);
+        free($5);
+        free($7);
     }
     | pidentifier {
         ast::DeclarationsNode* declarationsNode = new ast::DeclarationsNode();
         declarationsNode->pidentifiers.push_back($1);
         declarationsNode->setPosition(@1.first_line, @1.first_column);
         $$ = declarationsNode;
+        free($1);
     }
     | pidentifier LBRACKET num COLON num RBRACKET {
         ast::DeclarationsNode* declarationsNode = new ast::DeclarationsNode();
@@ -246,6 +255,9 @@ declarations:
         declarationsNode->arrays.push_back(arr);
         declarationsNode->setPosition(@1.first_line, @1.first_column);
         $$ = declarationsNode;
+        free($1);
+        free($3);
+        free($5);
     }
     ;
 
@@ -255,24 +267,28 @@ args_decl:
         argsDeclNode->pidentifiers.push_back($3);
         argsDeclNode->setPosition(@3.first_line, @3.first_column);
         $$ = argsDeclNode;
+        free($3);
     }
     | args_decl COMMA T pidentifier {
         ast::ArgsDeclNode* argsDeclNode = dynamic_cast<ast::ArgsDeclNode*>($1);
         argsDeclNode->Tpidentifiers.push_back($4);
         argsDeclNode->setPosition(@4.first_line, @4.first_column);
         $$ = argsDeclNode;
+        free($4);
     }
     | pidentifier {
         ast::ArgsDeclNode* argsDeclNode = new ast::ArgsDeclNode();
         argsDeclNode->pidentifiers.push_back($1);
         argsDeclNode->setPosition(@1.first_line, @1.first_column);
         $$ = argsDeclNode;
+        free($1);
     }
     | T pidentifier {
         ast::ArgsDeclNode* argsDeclNode = new ast::ArgsDeclNode();
         argsDeclNode->Tpidentifiers.push_back($2);
         argsDeclNode->setPosition(@2.first_line, @2.first_column);
         $$ = argsDeclNode;
+        free($2);
     }
     ;
 
@@ -282,12 +298,14 @@ args:
         argsNode->pidentifiers.push_back($3);
         argsNode->setPosition(@3.first_line, @3.first_column);
         $$ = argsNode;
+        free($3);
     }
     | pidentifier {
         ast::ArgsNode* argsNode = new ast::ArgsNode();
         argsNode->pidentifiers.push_back($1);
         argsNode->setPosition(@1.first_line, @1.first_column);
         $$ = argsNode;
+        free($1);
     }
     ;
 
@@ -442,6 +460,7 @@ value:
     num { ast::ValueNode* node = new ast::ValueNode();
           node->num = $1;
           $$ = node;
+          free($1);
           }
     | identifier {
         ast::ValueNode* node = new ast::ValueNode();
@@ -456,6 +475,7 @@ identifier:
         node->pidentifier = $1;
         node->setPosition(@1.first_line, @1.first_column);
         $$ = node;
+        free($1);
     }
     | pidentifier LBRACKET pidentifier RBRACKET {
         ast::IdentifierNode* node = new ast::IdentifierNode();
@@ -463,6 +483,8 @@ identifier:
         node->arrayPidentifierIndex = $3;
         node->setPosition(@1.first_line, @1.first_column);
         $$ = node;
+        free($1);
+        free($3);
     }
     | pidentifier LBRACKET num RBRACKET {
         ast::IdentifierNode* node = new ast::IdentifierNode();
@@ -470,6 +492,8 @@ identifier:
         node->arrayNumIndex = $3;
         node->setPosition(@1.first_line, @1.first_column);
         $$ = node;
+        free($1);
+        free($3);
     }
     ;
 

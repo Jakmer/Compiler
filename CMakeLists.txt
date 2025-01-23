@@ -49,3 +49,9 @@ add_custom_target(test
     COMMAND ${CMAKE_SOURCE_DIR}/test/start_testing.sh ${CMAKE_SOURCE_DIR}
     DEPENDS compiler
 )
+
+add_custom_target(valgrind_test
+    COMMAND ${CMAKE_SOURCE_DIR}/test/valgrind_test.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS compiler
+)
+
