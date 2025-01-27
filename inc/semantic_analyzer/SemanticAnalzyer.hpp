@@ -25,7 +25,6 @@ class SemanticAnalyzer {
     void checkFunctionDefinitions(const std::vector<std::string>& tokens);
     void raiseError(ValidationMessage &message, std::string &location);
     void processNode(ASTNode* node);
-    void printSymbolTable();
     std::string getLocation(ASTNode* node);
     ValidationMessage validateIterator(ASTNode* node);
 

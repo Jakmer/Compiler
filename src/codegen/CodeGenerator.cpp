@@ -1,13 +1,27 @@
 #include "CodeGenerator.hpp"
-#include "ASTNodeFactory.hpp"
 #include "AST.hpp"
+#include "ASTNodeFactory.hpp"
+#include "Command.hpp"
 #include "ErrorMessages.hpp"
+#include "Instructions.hpp"
+
+#include <fstream>
+#include <string>
 
 namespace codegen {
 
+CodeGenerator::CodeGenerator()
+    : currentProcName(""),
+      currentCommand(UNDEFINED),
+      lineCounter(0),
+      exitCode(semana::SUCCESS) {}
+
+CodeGenerator::~CodeGenerator() {}
+
 semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
-    exitCode = semana::SUCCESS;
+    this->context = context;
     processNode(context.astRoot);
+    saveInstructionsToFile();
     return exitCode;
 }
 
@@ -18,7 +32,7 @@ void CodeGenerator::processNode(ASTNode *node) {
         case PROGRAM_ALL_NODE: {
             auto programAllNode =
                 ast::ASTNodeFactory::castNode<ast::ProgramAllNode>(node);
-            for (auto& proc : programAllNode->procedures) {
+            for (auto &proc : programAllNode->procedures) {
                 processNode(proc);
             }
             processNode(programAllNode->main);
@@ -36,6 +50,9 @@ void CodeGenerator::processNode(ASTNode *node) {
         }
         case MAIN_NODE: {
             auto mainNode = ast::ASTNodeFactory::castNode<ast::MainNode>(node);
+            std::string mainName = "main";
+            markers.emplace_back(mainName, ++lineCounter);
+            currentProcName = mainName;
             processNode(mainNode->declarations);
             processNode(mainNode->commands);
             break;
@@ -103,18 +120,23 @@ void CodeGenerator::processNode(ASTNode *node) {
         }
         case READ_NODE: {
             auto readNode = ast::ASTNodeFactory::castNode<ast::ReadNode>(node);
+            currentCommand = READ;
             processNode(readNode->identifier);
             break;
         }
         case WRITE_NODE: {
             auto writeNode =
                 ast::ASTNodeFactory::castNode<ast::WriteNode>(node);
+            currentCommand = WRITE;
             processNode(writeNode->value);
             break;
         }
         case PROC_HEAD_NODE: {
             auto procHeadNode =
                 ast::ASTNodeFactory::castNode<ast::ProcHeadNode>(node);
+            auto procedureName = procHeadNode->pidentifier;
+            currentProcName = procedureName;
+            markers.emplace_back(procedureName, ++lineCounter);
             processNode(procHeadNode->args_decl);
             break;
         }
@@ -154,11 +176,46 @@ void CodeGenerator::processNode(ASTNode *node) {
             if (valueNode->identifier.has_value()) {
                 processNode(valueNode->identifier.value());
             }
+            if(valueNode->num.has_value()) {
+                auto currentScope = getCurrentScope();
+                auto pidentifier = valueNode->num.value();
+                auto symbol = context.symbolTable.getSymbolByName(pidentifier,
+                                                                  currentScope);
+                auto symbolAddress = symbol.address;
+                addCommand(pidentifier, symbolAddress);
+            }
             break;
         }
         case IDENTIFIER_NODE: {
             auto identifierNode =
                 ast::ASTNodeFactory::castNode<ast::IdentifierNode>(node);
+            auto currentScope = getCurrentScope();
+            if (identifierNode->pidentifier.has_value()) {
+                auto pidentifier = identifierNode->pidentifier.value();
+                auto symbol = context.symbolTable.getSymbolByName(pidentifier,
+                                                                  currentScope);
+                auto symbolAddress = symbol.address;
+                addCommand(pidentifier, symbolAddress);
+            }
+            if (identifierNode->Tpidentifier.has_value()) {
+                auto pidentifier = identifierNode->Tpidentifier.value();
+                auto symbol = context.symbolTable.getSymbolByName(pidentifier,
+                                                                  currentScope);
+                auto symbolAddress = symbol.address;
+
+                if (identifierNode->arrayNumIndex.has_value()) {
+                    auto pidentifier2 = identifierNode->arrayNumIndex.value();
+                    auto symbol2 = context.symbolTable.getSymbolByName(
+                        pidentifier, currentScope);
+                    auto symbolAddress2 = symbol.address;
+                }
+                if (identifierNode->arrayPidentifierIndex.has_value()) {
+                    auto pidentifier2 = identifierNode->arrayPidentifierIndex.value();
+                    auto symbol2 = context.symbolTable.getSymbolByName(
+                        pidentifier, currentScope);
+                    auto symbolAddress2 = symbol.address;
+                }
+            }
             break;
         }
         default:
@@ -166,4 +223,60 @@ void CodeGenerator::processNode(ASTNode *node) {
     }
 }
 
-}  // codegen
+int CodeGenerator::getCurrentScope() {
+    auto scope = context.symbolTable.getScopeByProcName(currentProcName);
+    return scope;
+}
+
+void CodeGenerator::addWrite(unsigned long &address) {
+    instructions.emplace_back(PUT, address);
+    lineCounter++;
+}
+
+void CodeGenerator::addCommand(std::string &symbolName, unsigned long &address) {
+    switch (currentCommand) {
+        case READ:
+            break;
+        case WRITE:
+            addWrite(address);
+            break;
+        case ASSIGN:
+            break;
+        case IF:
+            break;
+        case IF_ELSE:
+            break;
+        case WHILE:
+            break;
+        case REPEAT:
+            break;
+        case FOR_TO:
+            break;
+        case FORM_FROM:
+            break;
+        case PROC_CALL:
+            break;
+        case UNDEFINED:
+            /*throw std::runtime_error("Undefined command");*/
+            break;
+    }
+
+    currentCommand = UNDEFINED;
+}
+
+void CodeGenerator::saveInstructionsToFile()
+{
+    std::ofstream outFile(context.outputFile);
+    if (!outFile.is_open()) {
+        throw std::runtime_error("Unable to open " + context.outputFile + " for writing.");
+    }
+
+    for(const auto &i: instructions)
+    {
+        outFile << i.opcode << " " << i.value << std::endl;
+    }
+
+    outFile.close();
+}
+
+}  // namespace codegen

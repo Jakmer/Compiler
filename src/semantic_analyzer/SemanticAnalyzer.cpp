@@ -455,8 +455,6 @@ std::string SemanticAnalyzer::getLocation(ASTNode* node) {
            std::to_string(pos.column) + ": ";
 }
 
-void SemanticAnalyzer::printSymbolTable() { symbolTable.printSymbols(); }
-
 ValidationMessage SemanticAnalyzer::validateIterator(ASTNode* node) {
     // TODO: implement function that checks if we dont modify iterator and if
     // iterator is used only in loop scope NODE

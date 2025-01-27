@@ -15,6 +15,7 @@ class Compiler {
    public:
     semana::ExitCode compile(ast::ProgramAllNode* astRoot, std::string& inputFile, std::string& outputFile) {
         context.astRoot = astRoot;
+        context.outputFile = outputFile;
 
         semana::SemanticAnalyzer semAnalyzer(inputFile);
         std::cout << "Starting semantic analyzer ...\n";

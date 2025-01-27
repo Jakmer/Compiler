@@ -2,6 +2,7 @@
 #define INSTRUCTIONS_HPP
 
 #include <vector>
+#include <ostream>
 
 enum Opcode {
     GET,
@@ -21,7 +22,8 @@ enum Opcode {
     JZERO,
     JNEG,
     RTRN,
-    HALT
+    HALT,
+    UNDEFINED
 };
 
 class Instruction {
@@ -40,25 +42,30 @@ private:
     static const std::vector<long> executionTimes;
 };
 
-const std::vector<long> Instruction::executionTimes = {
-    100, // GET
-    100, // PUT
-    10,  // LOAD
-    10,  // STORE
-    20,  // LOADI
-    20,  // STOREI
-    10,  // ADD
-    10,  // SUB
-    20,  // ADDI
-    20,  // SUBI
-    50,  // SET
-    5,   // HALF
-    1,   // JUMP
-    1,   // JPOS
-    1,   // JZERO
-    1,   // JNEG
-    10,  // RTRN
-    0    // HALT
-};
+inline std::ostream& operator<<(std::ostream& os, const Opcode& opcode) {
+    switch (opcode) {
+        case GET: os << "GET"; break;
+        case PUT: os << "PUT"; break;
+        case LOAD: os << "LOAD"; break;
+        case STORE: os << "STORE"; break;
+        case LOADI: os << "LOADI"; break;
+        case STOREI: os << "STOREI"; break;
+        case ADD: os << "ADD"; break;
+        case SUB: os << "SUB"; break;
+        case ADDI: os << "ADDI"; break;
+        case SUBI: os << "SUBI"; break;
+        case SET: os << "SET"; break;
+        case HALF: os << "HALF"; break;
+        case JUMP: os << "JUMP"; break;
+        case JPOS: os << "JPOS"; break;
+        case JZERO: os << "JZERO"; break;
+        case JNEG: os << "JNEG"; break;
+        case RTRN: os << "RTRN"; break;
+        case HALT: os << "HALT"; break;
+        case UNDEFINED: os << "UNDEFINED"; break;
+        default: os << "UNKNOWN_OPCODE"; break;
+    }
+    return os;
+}
 
 #endif // !INSTRUCTIONS_HPP

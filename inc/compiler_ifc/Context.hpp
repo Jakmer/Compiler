@@ -10,6 +10,7 @@ class Context {
 public:
     ast::ProgramAllNode* astRoot = nullptr;
     semana::SymbolTable symbolTable;
+    std::string outputFile;
 
     Context() = default;
     ~Context() = default;

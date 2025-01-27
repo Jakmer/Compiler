@@ -1,6 +1,7 @@
 set(SOURCES
     SemanticAnalyzer.cpp
     SymbolTable.cpp
+    Symbol.cpp
     ErrorMessages.cpp
 )
 
