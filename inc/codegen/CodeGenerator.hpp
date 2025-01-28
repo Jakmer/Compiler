@@ -8,6 +8,7 @@
 #include "ErrorMessages.hpp"
 #include "ASTNode.hpp"
 #include "Instructions.hpp"
+#include "InstructNodes.hpp"
 
 namespace codegen {
 
@@ -28,6 +29,9 @@ class CodeGenerator {
     int getCurrentScope();
     void addCommand(std::string &symbolName, unsigned long &address);
     void addWrite(unsigned long &address); 
+    void addRead(unsigned long &address); 
+    void addAssign(std::vector<Instruction> &instructions);
+    void addJumpIfAccIsTrue(int &jump);
     void saveInstructionsToFile();
 
     semana::ExitCode exitCode;
@@ -37,6 +41,8 @@ class CodeGenerator {
     Command currentCommand;
     std::string currentProcName;
     compiler::Context context;
+    unsigned long accAddr;
+    AssignNode assignNode;
 };
 
 }  // namespace codegen

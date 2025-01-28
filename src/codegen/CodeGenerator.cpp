@@ -1,12 +1,14 @@
 #include "CodeGenerator.hpp"
+
+#include <fstream>
+#include <string>
+
 #include "AST.hpp"
 #include "ASTNodeFactory.hpp"
 #include "Command.hpp"
 #include "ErrorMessages.hpp"
+#include "InstructNodes.hpp"
 #include "Instructions.hpp"
-
-#include <fstream>
-#include <string>
 
 namespace codegen {
 
@@ -14,7 +16,8 @@ CodeGenerator::CodeGenerator()
     : currentProcName(""),
       currentCommand(UNDEFINED),
       lineCounter(0),
-      exitCode(semana::SUCCESS) {}
+      exitCode(semana::SUCCESS),
+      accAddr(0) {}
 
 CodeGenerator::~CodeGenerator() {}
 
@@ -68,6 +71,7 @@ void CodeGenerator::processNode(ASTNode *node) {
         case ASSIGNMENT_NODE: {
             auto assignmentNode =
                 ast::ASTNodeFactory::castNode<ast::AssignmentNode>(node);
+            currentCommand = ASSIGN;
             processNode(assignmentNode->identifier);
             processNode(assignmentNode->expression);
             break;
@@ -92,8 +96,14 @@ void CodeGenerator::processNode(ASTNode *node) {
         case REPEAT_STATEMENT_NODE: {
             auto repeatStatementNode =
                 ast::ASTNodeFactory::castNode<ast::RepeatStatementNode>(node);
-            processNode(repeatStatementNode->condition);
+            auto currLineCounter = lineCounter;
+            currentCommand = REPEAT;
             processNode(repeatStatementNode->commands);
+            processNode(repeatStatementNode->condition);
+            auto relativePathDist = currLineCounter - lineCounter;
+            // condition result should be put into acc
+            addJumpIfAccIsTrue(relativePathDist);
+
             break;
         }
         case FOR_TO_NODE: {
@@ -157,6 +167,11 @@ void CodeGenerator::processNode(ASTNode *node) {
         case EXPRESSION_NODE: {
             auto expressionNode =
                 ast::ASTNodeFactory::castNode<ast::ExpressionNode>(node);
+            if (expressionNode->value2.has_value())
+            {
+                assignNode.waitForThirdArg = true;
+                assignNode.operation = static_cast<AssignOperation>(expressionNode->mathOperation.value());
+            }
             processNode(expressionNode->value1);
             if (expressionNode->value2.has_value()) {
                 processNode(expressionNode->value2.value());
@@ -176,7 +191,7 @@ void CodeGenerator::processNode(ASTNode *node) {
             if (valueNode->identifier.has_value()) {
                 processNode(valueNode->identifier.value());
             }
-            if(valueNode->num.has_value()) {
+            if (valueNode->num.has_value()) {
                 auto currentScope = getCurrentScope();
                 auto pidentifier = valueNode->num.value();
                 auto symbol = context.symbolTable.getSymbolByName(pidentifier,
@@ -210,7 +225,8 @@ void CodeGenerator::processNode(ASTNode *node) {
                     auto symbolAddress2 = symbol.address;
                 }
                 if (identifierNode->arrayPidentifierIndex.has_value()) {
-                    auto pidentifier2 = identifierNode->arrayPidentifierIndex.value();
+                    auto pidentifier2 =
+                        identifierNode->arrayPidentifierIndex.value();
                     auto symbol2 = context.symbolTable.getSymbolByName(
                         pidentifier, currentScope);
                     auto symbolAddress2 = symbol.address;
@@ -233,46 +249,83 @@ void CodeGenerator::addWrite(unsigned long &address) {
     lineCounter++;
 }
 
-void CodeGenerator::addCommand(std::string &symbolName, unsigned long &address) {
-    switch (currentCommand) {
-        case READ:
-            break;
-        case WRITE:
-            addWrite(address);
-            break;
-        case ASSIGN:
-            break;
-        case IF:
-            break;
-        case IF_ELSE:
-            break;
-        case WHILE:
-            break;
-        case REPEAT:
-            break;
-        case FOR_TO:
-            break;
-        case FORM_FROM:
-            break;
-        case PROC_CALL:
-            break;
-        case UNDEFINED:
-            /*throw std::runtime_error("Undefined command");*/
-            break;
-    }
-
-    currentCommand = UNDEFINED;
+void CodeGenerator::addRead(unsigned long &address) {
+    instructions.emplace_back(GET, address);
+    lineCounter++;
 }
 
-void CodeGenerator::saveInstructionsToFile()
-{
-    std::ofstream outFile(context.outputFile);
-    if (!outFile.is_open()) {
-        throw std::runtime_error("Unable to open " + context.outputFile + " for writing.");
+void CodeGenerator::addAssign(std::vector<Instruction> &instructions) {
+    this->instructions.insert(this->instructions.end(), instructions.begin(),
+                              instructions.end());
+    lineCounter += instructions.size();
+}
+
+void CodeGenerator::addJumpIfAccIsTrue(int &jump) {
+    instructions.emplace_back(LOAD, accAddr);
+    instructions.emplace_back(JPOS, jump);
+    lineCounter++;
+}
+
+void CodeGenerator::addCommand(std::string &symbolName,
+                               unsigned long &address) {
+    switch (currentCommand) {
+        case READ:{
+            addRead(address);
+            currentCommand = UNDEFINED;
+            break;
+        }
+        case WRITE: {
+            addWrite(address);
+            currentCommand = UNDEFINED;
+            break;
+        }
+        case ASSIGN:{
+            NodeReadyToGenerateCode res = assignNode.addVariable(address);
+            if (res) {
+                auto instructions = assignNode.generateCode();
+                addAssign(instructions);
+                assignNode.clear();
+                currentCommand = UNDEFINED;
+            }
+            break;
+        }
+        case IF: {
+            break;
+        }
+        case IF_ELSE: {
+            break;
+        }
+        case WHILE: {
+            break;
+        }
+        case REPEAT: {
+            break;
+        }
+        case FOR_TO: {
+            break;
+        }
+        case FORM_FROM: {
+            break;
+        }
+        case PROC_CALL: {
+            break;
+        }
+        case UNDEFINED: {
+            /*throw std::runtime_error("Undefined command");*/
+            break;
+        }
     }
 
-    for(const auto &i: instructions)
-    {
+}
+
+void CodeGenerator::saveInstructionsToFile() {
+    std::ofstream outFile(context.outputFile);
+    if (!outFile.is_open()) {
+        throw std::runtime_error("Unable to open " + context.outputFile +
+                                 " for writing.");
+    }
+
+    for (const auto &i : instructions) {
         outFile << i.opcode << " " << i.value << std::endl;
     }
 
