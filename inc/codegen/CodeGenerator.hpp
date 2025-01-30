@@ -37,7 +37,7 @@ class CodeGenerator {
     void setRValues();
     void saveInstructionsToFile();
     unsigned long getFreeRegister();
-    unsigned long getMarkerForName(const std::string &name);
+    unsigned long getMarkerForName(std::string &name);
 
     semana::ExitCode exitCode;
     std::vector<Instruction> instructions;

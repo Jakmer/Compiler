@@ -1,0 +1,17 @@
+PROGRAM IS
+  n, p, k
+BEGIN
+  p:= 100;
+  k:=-10;
+  WRITE k;
+  READ n;
+  n:=n+p;
+  WRITE n;
+  n:=n-p;
+  WRITE n;
+  n:=100;
+  n:=n-k;
+  WRITE n;
+  n:=n+k;
+  WRITE n;
+END

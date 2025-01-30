@@ -1,0 +1,13 @@
+PROGRAM IS
+  n, p, k
+BEGIN
+  p:= 100;
+  k:= 100;
+  n:=-10;
+
+  IF p=k THEN
+    WRITE 1;
+  ELSE
+    WRITE 0;
+  ENDIF
+END

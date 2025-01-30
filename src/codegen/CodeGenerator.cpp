@@ -98,12 +98,20 @@ void CodeGenerator::processNode(ASTNode *node) {
             auto currLineCounter1 = lineCounter;
             processNode(ifStatementNode->commands);
             auto currLineCounter2 = lineCounter;
-            auto relativePathDist = currLineCounter2 - currLineCounter1;
+            auto relativePathDist = currLineCounter2 - currLineCounter1 + 2;    // +2 bc we need to jump over all commands and ending if jump
             markers.emplace_back(label, relativePathDist);
             // find jump to label in instruction and change it to relative path
             if (ifStatementNode->elseCommands.has_value()) {
+                std::string label =
+                    "condition_else" + std::to_string(noConditions);
+                this->conditionNode.name = label;
                 this->conditionNode.elseExist = true;
+                instructions.emplace_back(JUMP, label);
+                auto currLineCounter1 = lineCounter;
                 processNode(ifStatementNode->elseCommands.value());
+                auto currLineCounter2 = lineCounter;
+                auto relativePathDist = currLineCounter2 - currLineCounter1 + 1;
+                markers.emplace_back(label, relativePathDist);
             }
             break;
         }
@@ -361,18 +369,28 @@ void CodeGenerator::addCommand(std::string &symbolName,
 void CodeGenerator::setRValues() {
     auto rvalues = context.symbolTable.getRValues();
 
-    for(auto &i : rvalues)
-    {
+    for (auto &i : rvalues) {
         instructions.emplace_back(SET, i.name, RVALUE);
-        instructions.emplace_back(LOAD, i.address);
-        lineCounter++;
+        instructions.emplace_back(STORE, i.address);
+        lineCounter += 2;
     }
 }
 
-unsigned long CodeGenerator::getMarkerForName(const std::string &name) {
-    for (auto &i : markers) {
-        if (i.name == name) return i.line;  // it is actually jump value
+unsigned long CodeGenerator::getMarkerForName(std::string &name) {
+    bool shouldBeIncremented = false;
+    if (name.find(":inc") != std::string::npos) {
+        shouldBeIncremented = true;
+        name = name.substr(0, name.size() - 4);
     }
+
+    for (auto &i : markers) {
+        if (i.name == name) {
+            auto jump = i.line;
+            if (shouldBeIncremented) jump++;
+            return jump;
+        }
+    }
+
     throw std::runtime_error("Did not find marker with name: " + name);
 }
 
@@ -383,15 +401,13 @@ void CodeGenerator::saveInstructionsToFile() {
                                  " for writing.");
     }
 
-    for (const auto &i : instructions) {
+    for (auto &i : instructions) {
         if (i.opcode == HALF || i.opcode == HALT)
             outFile << i.opcode << std::endl;
         else if (i.mode == LABEL) {
             auto jumpOverIf = getMarkerForName(i.label);
-            outFile << i.opcode << " " << jumpOverIf
-                    << std::endl;
-        }
-        else if(i.mode == RVALUE){
+            outFile << i.opcode << " " << jumpOverIf << std::endl;
+        } else if (i.mode == RVALUE) {
             outFile << i.opcode << " " << i.label << std::endl;
         } else
             outFile << i.opcode << " " << i.value << std::endl;

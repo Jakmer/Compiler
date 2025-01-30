@@ -71,7 +71,7 @@
 "]"                    { RETURN_TOKEN(RBRACKET); }
 
 [_a-z]+                { yylval.string_value = strdup(yytext); RETURN_TOKEN(pidentifier); } // Identifiers
-[0-9]+                 { yylval.string_value = strdup(yytext); RETURN_TOKEN(num); } // Numbers
+-?[0-9]+                 { yylval.string_value = strdup(yytext); RETURN_TOKEN(num); } // Numbers
 
 .                      { printf("Invalid character: %s\n", yytext); exit(1); }
 

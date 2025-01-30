@@ -351,15 +351,15 @@ class ConditionNode {
         instructions.emplace_back(LOAD, identifier1);
         instructions.emplace_back(STORE, freeReg1);
 
-        std::string jumpOverIf = name;  // during generation replace jumpOverIf labe with marker
-                              // standing by particular if label
+        std::string jumpOverIf = name;  // during generation replace jumpOverIf labe with marker standing by particular if label
+        std::string jumpOverIfIncremented = name+":inc";    // bc we have jump over "jumpOverIf" also
 
         switch (operation) {
             case EQ: {
                 instructions.emplace_back(SUB, freeReg2);
                 // JPOS jump if !=0
                 // JNEG jump if !=0
-                instructions.emplace_back(JPOS, jumpOverIf);
+                instructions.emplace_back(JPOS, jumpOverIfIncremented);
                 instructions.emplace_back(JNEG, jumpOverIf);
                 break;
             }
@@ -373,7 +373,7 @@ class ConditionNode {
                 instructions.emplace_back(SUB, freeReg2);
                 // JZERO    jump only if acc >= 0
                 // JNEG
-                instructions.emplace_back(JZERO, jumpOverIf);
+                instructions.emplace_back(JZERO, jumpOverIfIncremented);
                 instructions.emplace_back(JNEG, jumpOverIf);
                 break;
             }
@@ -381,7 +381,7 @@ class ConditionNode {
                 instructions.emplace_back(SUB, freeReg2);
                 // JZERO    jump only if acc <= 0
                 // JPOS
-                instructions.emplace_back(JZERO, jumpOverIf);
+                instructions.emplace_back(JZERO, jumpOverIfIncremented);
                 instructions.emplace_back(JPOS, jumpOverIf);
                 break;
             }
