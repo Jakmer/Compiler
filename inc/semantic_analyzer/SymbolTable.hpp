@@ -2,6 +2,7 @@
 #define SYMBOL_TABLE_HPP
 
 #include <string>
+
 #include "Symbol.hpp"
 
 namespace semana {
@@ -16,7 +17,9 @@ class SymbolTable {
                                      semana::RuntimeParams &runtimeParams);
     Symbol getSymbolByName(std::string &name, int &scope);
     int getScopeByProcName(std::string &name);
+    std::vector<RValue> getRValues();
     unsigned long getLastUsedAddr();
+
    private:
     ValidationMessage validateDeclaration(Symbol &symbol,
                                           RuntimeParams &runtimeParams);

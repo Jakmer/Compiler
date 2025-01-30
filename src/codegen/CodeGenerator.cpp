@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 
 #include "ASTNodeFactory.hpp"
@@ -19,6 +20,7 @@ CodeGenerator::CodeGenerator()
       currentCommand(UNDEFINED),
       lineCounter(0),
       exitCode(semana::SUCCESS),
+      noConditions(0),
       accAddr(0) {}
 
 CodeGenerator::~CodeGenerator() {}
@@ -28,6 +30,7 @@ semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
     memory = Memory(context.symbolTable.getLastUsedAddr());
     assignNode = AssignNode(memory);
     conditionNode = ConditionNode(memory);
+    setRValues();
     processNode(context.astRoot);
     saveInstructionsToFile();
     return exitCode;
@@ -44,6 +47,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 processNode(proc);
             }
             processNode(programAllNode->main);
+            addHalt();
             break;
         }
         case PROCEDURES_NODE: {
@@ -54,6 +58,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 processNode(proceduresNode->declarations.value());
             }
             processNode(proceduresNode->commands);
+            // jump to main
             break;
         }
         case MAIN_NODE: {
@@ -84,10 +89,20 @@ void CodeGenerator::processNode(ASTNode *node) {
         case IF_STATEMENT_NODE: {
             auto ifStatementNode =
                 ast::ASTNodeFactory::castNode<ast::IfStatementNode>(node);
+            // label condition
+            noConditions++;
+            currentCommand = CONDITION;
+            std::string label = "condition" + std::to_string(noConditions);
+            this->conditionNode.name = label;
             processNode(ifStatementNode->condition);
+            auto currLineCounter1 = lineCounter;
             processNode(ifStatementNode->commands);
+            auto currLineCounter2 = lineCounter;
+            auto relativePathDist = currLineCounter2 - currLineCounter1;
+            markers.emplace_back(label, relativePathDist);
+            // find jump to label in instruction and change it to relative path
             if (ifStatementNode->elseCommands.has_value()) {
-                this->conditionNode.elseExist=true;
+                this->conditionNode.elseExist = true;
                 processNode(ifStatementNode->elseCommands.value());
             }
             break;
@@ -189,9 +204,9 @@ void CodeGenerator::processNode(ASTNode *node) {
         case CONDITION_NODE: {
             auto conditionNode =
                 ast::ASTNodeFactory::castNode<ast::ConditionNode>(node);
-            currentCommand = CONDITION;
-            this->conditionNode.operation =
-                static_cast<ConditionOperation>(conditionNode->relation); // be careful here - enums may be not mapped in exactly same way
+            this->conditionNode.operation = static_cast<ConditionOperation>(
+                conditionNode->relation);  // be careful here - enums may be not
+                                           // mapped in exactly same way
             processNode(conditionNode->value1);
             processNode(conditionNode->value2);
             break;
@@ -253,6 +268,11 @@ void CodeGenerator::processNode(ASTNode *node) {
 int CodeGenerator::getCurrentScope() {
     auto scope = context.symbolTable.getScopeByProcName(currentProcName);
     return scope;
+}
+
+void CodeGenerator::addHalt() {
+    instructions.emplace_back(HALT, 0);
+    lineCounter++;
 }
 
 void CodeGenerator::addWrite(unsigned long &address) {
@@ -338,6 +358,24 @@ void CodeGenerator::addCommand(std::string &symbolName,
     }
 }
 
+void CodeGenerator::setRValues() {
+    auto rvalues = context.symbolTable.getRValues();
+
+    for(auto &i : rvalues)
+    {
+        instructions.emplace_back(SET, i.name, RVALUE);
+        instructions.emplace_back(LOAD, i.address);
+        lineCounter++;
+    }
+}
+
+unsigned long CodeGenerator::getMarkerForName(const std::string &name) {
+    for (auto &i : markers) {
+        if (i.name == name) return i.line;  // it is actually jump value
+    }
+    throw std::runtime_error("Did not find marker with name: " + name);
+}
+
 void CodeGenerator::saveInstructionsToFile() {
     std::ofstream outFile(context.outputFile);
     if (!outFile.is_open()) {
@@ -348,7 +386,14 @@ void CodeGenerator::saveInstructionsToFile() {
     for (const auto &i : instructions) {
         if (i.opcode == HALF || i.opcode == HALT)
             outFile << i.opcode << std::endl;
-        else
+        else if (i.mode == LABEL) {
+            auto jumpOverIf = getMarkerForName(i.label);
+            outFile << i.opcode << " " << jumpOverIf
+                    << std::endl;
+        }
+        else if(i.mode == RVALUE){
+            outFile << i.opcode << " " << i.label << std::endl;
+        } else
             outFile << i.opcode << " " << i.value << std::endl;
     }
 

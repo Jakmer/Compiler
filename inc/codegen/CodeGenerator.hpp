@@ -29,12 +29,15 @@ class CodeGenerator {
     void processNode(ASTNode *node);
     int getCurrentScope();
     void addCommand(std::string &symbolName, unsigned long &address);
+    void addHalt();
     void addWrite(unsigned long &address);
     void addRead(unsigned long &address);
     void addAssign(std::vector<Instruction> &instructions);
     void addJumpIfAccIsTrue(int &jump);
+    void setRValues();
     void saveInstructionsToFile();
     unsigned long getFreeRegister();
+    unsigned long getMarkerForName(const std::string &name);
 
     semana::ExitCode exitCode;
     std::vector<Instruction> instructions;
@@ -47,6 +50,7 @@ class CodeGenerator {
     AssignNode assignNode;
     ConditionNode conditionNode;
     Memory memory;
+    int noConditions;
 };
 
 }  // namespace codegen

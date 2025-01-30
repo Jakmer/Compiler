@@ -75,6 +75,13 @@ struct RuntimeParams {
     ProcCall procCall;
 };
 
+struct RValue {
+    std::string name;
+    unsigned long address;
+
+    RValue(std::string &name, unsigned long &address) : name(name), address(address) {};
+};
+
 std::string toString(const SymbolType &symbolType); 
 
 } // semana

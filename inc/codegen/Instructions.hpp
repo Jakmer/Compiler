@@ -26,13 +26,23 @@ enum Opcode {
     UNDEFINED
 };
 
+enum InstructionMode {
+    VALUE,
+    LABEL,
+    RVALUE,
+};
+
 class Instruction {
 public:
     Opcode opcode;
     long value;
+    std::string label;
+    InstructionMode mode;
 
     Instruction(Opcode opcode, long value = 0)
-        : opcode(opcode), value(value) {}
+        : opcode(opcode), value(value), mode(VALUE) {}
+    Instruction(Opcode opcode, std::string &label, InstructionMode mode = LABEL)  // constructor for label jump
+        : opcode(opcode), label(label), mode(mode) {}
 
     static long getExecutionTime(Opcode opcode) {
         return executionTimes[opcode];

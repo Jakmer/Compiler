@@ -1,8 +1,12 @@
 #include "SymbolTable.hpp"
 
-namespace semana{
+#include "Symbol.hpp"
 
-SymbolTable::SymbolTable() : noProcedures(0), address(1){};  // address start from 5 because 0 is reserved for accumulator
+namespace semana {
+
+SymbolTable::SymbolTable()
+    : noProcedures(0), address(1) {
+      };  // address start from 5 because 0 is reserved for accumulator
 
 ValidationMessage SymbolTable::openScope(ScopeType scopeType) {
     switch (scopeType) {
@@ -16,16 +20,14 @@ ValidationMessage SymbolTable::openScope(ScopeType scopeType) {
         case MAIN_SCOPE: {
             if (scopes.top() != GLOBAL_SCOPE)
                 return ValidationMessage(
-                    BAD_SCOPE,
-                    "Function can be declared only in global scope");
+                    BAD_SCOPE, "Function can be declared only in global scope");
             scopes.push(0);  // 0 is reserved for main scope only
             break;
         }
         case PROCEDURE_SCOPE: {
             if (scopes.top() != GLOBAL_SCOPE)
                 return ValidationMessage(
-                    BAD_SCOPE,
-                    "Function can be declared only in global scope");
+                    BAD_SCOPE, "Function can be declared only in global scope");
             scopes.push(++noProcedures);
             break;
         }
@@ -37,8 +39,7 @@ ValidationMessage SymbolTable::openScope(ScopeType scopeType) {
 };
 
 ValidationMessage SymbolTable::closeScope() {
-    if (scopes.empty())
-        throw std::runtime_error("Cannot close empty scope!");
+    if (scopes.empty()) throw std::runtime_error("Cannot close empty scope!");
 
     scopes.pop();
 
@@ -50,7 +51,8 @@ ValidationMessage SymbolTable::closeScope() {
     return ValidationMessage(GOOD, "");
 }
 
-ValidationMessage SymbolTable::addSymbol(Symbol &symbol, RuntimeParams &runtimeParams) {
+ValidationMessage SymbolTable::addSymbol(Symbol &symbol,
+                                         RuntimeParams &runtimeParams) {
     symbol.scope = scopes.top();
 
     auto validatationMessage = validateDeclaration(symbol, runtimeParams);
@@ -62,15 +64,14 @@ ValidationMessage SymbolTable::addSymbol(Symbol &symbol, RuntimeParams &runtimeP
         symbol.isInitalized =
             true;  // verification will be done on call function side
 
-        auto &procedureSymbol = getLatestProcedureName(
-            runtimeParams.procCall.latestProcedureName);
+        auto &procedureSymbol =
+            getLatestProcedureName(runtimeParams.procCall.latestProcedureName);
 
         if (!std::holds_alternative<std::vector<std::string>>(
                 procedureSymbol.value)) {
             procedureSymbol.value = std::vector<std::string>();
         }
-        auto &vec =
-            std::get<std::vector<std::string>>(procedureSymbol.value);
+        auto &vec = std::get<std::vector<std::string>>(procedureSymbol.value);
         vec.insert(vec.begin(), symbolUniqueName);  // change to deque
     }
 
@@ -80,8 +81,8 @@ ValidationMessage SymbolTable::addSymbol(Symbol &symbol, RuntimeParams &runtimeP
     return ValidationMessage(GOOD, "");
 }
 
-ValidationMessage SymbolTable::validateSymbol(Symbol &symbol,
-                                    semana::RuntimeParams &runtimeParams) {
+ValidationMessage SymbolTable::validateSymbol(
+    Symbol &symbol, semana::RuntimeParams &runtimeParams) {
     auto symbolUniqueName = getSymbolUniqeName(symbol);
 
     auto mapSymbol = symbols.find(symbolUniqueName);
@@ -119,10 +120,9 @@ ValidationMessage SymbolTable::validateSymbol(Symbol &symbol,
                 runtimeParams.procCall.isProcedureCall)
                 declaredSymbol.isInitalized =
                     true;  // second condition is dangerous - variable can
-                            // stay unitialzed after call
+                           // stay unitialzed after call
             if (!declaredSymbol.isInitalized)
-                return ValidationMessage(UNINITIALIZED_VARIABLE,
-                                            symbol.name);
+                return ValidationMessage(UNINITIALIZED_VARIABLE, symbol.name);
             break;
         }
         case ARRAY: {
@@ -132,8 +132,7 @@ ValidationMessage SymbolTable::validateSymbol(Symbol &symbol,
                     TYPE_MISMATCH,
                     "Expected: " + toString(declaredSymbol.symbolType) +
                         " Received: " + toString(symbol.symbolType));
-            if (runtimeParams.isAssignment)
-                declaredSymbol.isInitalized = true;
+            if (runtimeParams.isAssignment) declaredSymbol.isInitalized = true;
             if (runtimeParams.isAssignment) {
                 // we can treat it like variable in this case
             }
@@ -158,13 +157,11 @@ ValidationMessage SymbolTable::validateSymbol(Symbol &symbol,
                 declaredSymbol.isInitalized = true;
             }
             if (!symbol.isArrayIndex && runtimeParams.isAssignment)
-                return ValidationMessage(ITERATOR_MODIFICATION,
-                                            symbol.name);
+                return ValidationMessage(ITERATOR_MODIFICATION, symbol.name);
             break;
         }
         case ARRAY_ELEMENT: {
-            if (runtimeParams.isAssignment)
-                declaredSymbol.isInitalized = true;
+            if (runtimeParams.isAssignment) declaredSymbol.isInitalized = true;
             if (declaredSymbol.symbolType != ARRAY)
                 return ValidationMessage(
                     TYPE_MISMATCH,
@@ -191,9 +188,8 @@ ValidationMessage SymbolTable::validateSymbol(Symbol &symbol,
 
             if (expectedType != receivedType)
                 return ValidationMessage(
-                    TYPE_MISMATCH,
-                    "Expected: " + toString(expectedType) +
-                        " Received: " + toString(receivedType));
+                    TYPE_MISMATCH, "Expected: " + toString(expectedType) +
+                                       " Received: " + toString(receivedType));
 
             declaredSymbol.isInitalized = true;
 
@@ -207,9 +203,8 @@ ValidationMessage SymbolTable::validateSymbol(Symbol &symbol,
     return ValidationMessage(GOOD, "");
 }
 
-
-ValidationMessage SymbolTable::validateDeclaration(Symbol &symbol,
-                                        RuntimeParams &runtimeParams) {
+ValidationMessage SymbolTable::validateDeclaration(
+    Symbol &symbol, RuntimeParams &runtimeParams) {
     auto symbolUniqueName = getSymbolUniqeName(symbol);
 
     if (symbol.symbolType != RVALUE &&
@@ -249,7 +244,6 @@ ValidationMessage SymbolTable::validateDeclaration(Symbol &symbol,
     return ValidationMessage(GOOD, "");
 }
 
-
 std::string SymbolTable::getSymbolUniqeName(Symbol &symbol, int scope) {
     std::string uniqueName;
 
@@ -261,7 +255,6 @@ std::string SymbolTable::getSymbolUniqeName(Symbol &symbol, int scope) {
     return uniqueName;
 }
 
-
 Symbol &SymbolTable::getLatestProcedureName(std::string &name) {
     std::string prefix = "procedure";
     std::string procedureName = prefix + name;
@@ -269,11 +262,10 @@ Symbol &SymbolTable::getLatestProcedureName(std::string &name) {
     return symbols[procedureName];
 }
 
-
 void SymbolTable::assignAddress(Symbol &symbol) {
     if (symbol.symbolType == PROCEDURE) {
         symbol.address = 0;  // TODO: make it unaddressable - its address is
-                                // define with assembler operations number
+                             // define with assembler operations number
         return;
     }
 
@@ -290,21 +282,28 @@ void SymbolTable::assignAddress(Symbol &symbol) {
     }
 }
 
-int SymbolTable::getScopeByProcName(std::string &name){
-    if(name=="main")
-        return 0;
+int SymbolTable::getScopeByProcName(std::string &name) {
+    if (name == "main") return 0;
     auto symbol = getLatestProcedureName(name);
     return symbol.scope;
 }
 
-Symbol SymbolTable::getSymbolByName(std::string &name, int &scope){
+Symbol SymbolTable::getSymbolByName(std::string &name, int &scope) {
     std::string symbolUniqueName = std::to_string(scope) + name;
     return symbols[symbolUniqueName];
 }
 
-unsigned long SymbolTable::getLastUsedAddr(){
-    return address;
-}
+unsigned long SymbolTable::getLastUsedAddr() { return address; }
 
-}
+std::vector<RValue> SymbolTable::getRValues() {
+    std::vector<RValue> rvalues;
 
+    for (auto &[key, value] : symbols) {
+        if (value.symbolType == RVALUE) {
+            rvalues.emplace_back(value.name, value.address);
+        }
+    }
+
+    return rvalues;
+}
+}  // namespace semana

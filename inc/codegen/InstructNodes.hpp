@@ -325,6 +325,7 @@ class ConditionNode {
     unsigned long identifier2;
     ConditionOperation operation;
     bool elseExist;
+    std::string name;
 
     ConditionNode() = default;
 
@@ -350,50 +351,50 @@ class ConditionNode {
         instructions.emplace_back(LOAD, identifier1);
         instructions.emplace_back(STORE, freeReg1);
 
-        int jumpToElse;
-        int jumpToEndif;
+        std::string jumpOverIf = name;  // during generation replace jumpOverIf labe with marker
+                              // standing by particular if label
 
         switch (operation) {
             case EQ: {
                 instructions.emplace_back(SUB, freeReg2);
                 // JPOS jump if !=0
                 // JNEG jump if !=0
-                instructions.emplace_back(JPOS, jumpToElse);
-                instructions.emplace_back(JNEG, jumpToElse);
+                instructions.emplace_back(JPOS, jumpOverIf);
+                instructions.emplace_back(JNEG, jumpOverIf);
                 break;
             }
             case NEQ: {
                 instructions.emplace_back(SUB, freeReg2);
                 // JZERO    jump only if acc == 0
-                instructions.emplace_back(JZERO, jumpToElse);
+                instructions.emplace_back(JZERO, jumpOverIf);
                 break;
             }
             case GT: {
                 instructions.emplace_back(SUB, freeReg2);
                 // JZERO    jump only if acc >= 0
                 // JNEG
-                instructions.emplace_back(JZERO, jumpToElse);
-                instructions.emplace_back(JNEG, jumpToElse);
+                instructions.emplace_back(JZERO, jumpOverIf);
+                instructions.emplace_back(JNEG, jumpOverIf);
                 break;
             }
             case LT: {
                 instructions.emplace_back(SUB, freeReg2);
                 // JZERO    jump only if acc <= 0
                 // JPOS
-                instructions.emplace_back(JZERO, jumpToElse);
-                instructions.emplace_back(JPOS, jumpToElse);
+                instructions.emplace_back(JZERO, jumpOverIf);
+                instructions.emplace_back(JPOS, jumpOverIf);
                 break;
             }
             case GE: {
                 instructions.emplace_back(SUB, freeReg2);
                 // JNEG     jump only if acc < 0
-                instructions.emplace_back(JNEG, jumpToElse);
+                instructions.emplace_back(JNEG, jumpOverIf);
                 break;
             }
             case LE: {
                 instructions.emplace_back(SUB, freeReg2);
                 // JPOS    jump only if acc > 0
-                instructions.emplace_back(JPOS, jumpToElse);
+                instructions.emplace_back(JPOS, jumpOverIf);
                 break;
             }
             case UNDEF: {
