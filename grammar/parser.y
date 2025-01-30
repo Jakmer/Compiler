@@ -1,6 +1,7 @@
 %{
 #include <iostream>
 #include <string>
+#include <cstring>
 #include "AST.hpp"
 
 ast::ProgramAllNode* astRoot = nullptr;
@@ -28,7 +29,7 @@ int yyerror(const char* s);
 %token T
 
 %type <node_value> program_all main command procedures expression condition value identifier proc_head proc_call declarations args_decl args commands
-%type <string_value> num
+%type <string_value> signed_num num
 %type <string_value> pidentifier
 
 %%
@@ -232,7 +233,7 @@ declarations:
         $$ = declarationsNode;
         free($3);
     }
-    | declarations COMMA pidentifier LBRACKET num COLON num RBRACKET {
+    | declarations COMMA pidentifier LBRACKET signed_num COLON signed_num RBRACKET {
         ast::DeclarationsNode* declarationsNode = dynamic_cast<ast::DeclarationsNode*>($1);
         ast::array arr{ $3, $5, $7 };
         declarationsNode->arrays.push_back(arr);
@@ -249,7 +250,7 @@ declarations:
         $$ = declarationsNode;
         free($1);
     }
-    | pidentifier LBRACKET num COLON num RBRACKET {
+    | pidentifier LBRACKET signed_num COLON signed_num RBRACKET {
         ast::DeclarationsNode* declarationsNode = new ast::DeclarationsNode();
         ast::array arr { $1, $3, $5 };
         declarationsNode->arrays.push_back(arr);
@@ -457,7 +458,7 @@ condition:
     ;
 
 value:
-    num { ast::ValueNode* node = new ast::ValueNode();
+    signed_num { ast::ValueNode* node = new ast::ValueNode();
           node->num = $1;
           $$ = node;
           free($1);
@@ -486,7 +487,7 @@ identifier:
         free($1);
         free($3);
     }
-    | pidentifier LBRACKET num RBRACKET {
+    | pidentifier LBRACKET signed_num RBRACKET {
         ast::IdentifierNode* node = new ast::IdentifierNode();
         node->Tpidentifier = $1;
         node->arrayNumIndex = $3;
@@ -496,6 +497,19 @@ identifier:
         free($3);
     }
     ;
+
+signed_num:
+    MINUS num {
+        char* num = $2;
+        char* signed_num = (char*)malloc(strlen(num) + 2);
+        signed_num[0] = '-';
+        strcpy(signed_num + 1, num);
+        $$ = signed_num;
+        free(num);
+    }
+    | num {
+        $$ = $1;
+    }
 
 %%
 

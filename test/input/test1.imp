@@ -14,4 +14,9 @@ BEGIN
   WRITE n;
   n:=n+k;
   WRITE n;
+  
+  n:=-5;
+  k:=-7;
+  n:=n-k;
+  WRITE n;
 END
