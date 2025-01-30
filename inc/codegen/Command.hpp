@@ -6,6 +6,7 @@ enum Command {
     READ,
     WRITE,
     ASSIGN,
+    CONDITION,
     IF,
     IF_ELSE,
     WHILE,

@@ -16,6 +16,7 @@ class SymbolTable {
                                      semana::RuntimeParams &runtimeParams);
     Symbol getSymbolByName(std::string &name, int &scope);
     int getScopeByProcName(std::string &name);
+    unsigned long getLastUsedAddr();
    private:
     ValidationMessage validateDeclaration(Symbol &symbol,
                                           RuntimeParams &runtimeParams);

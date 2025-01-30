@@ -1,14 +1,16 @@
 #include "CodeGenerator.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <string>
 
-#include "AST.hpp"
 #include "ASTNodeFactory.hpp"
 #include "Command.hpp"
 #include "ErrorMessages.hpp"
 #include "InstructNodes.hpp"
 #include "Instructions.hpp"
+#include "Memory.hpp"
+#include "SymbolTable.hpp"
 
 namespace codegen {
 
@@ -23,6 +25,9 @@ CodeGenerator::~CodeGenerator() {}
 
 semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
     this->context = context;
+    memory = Memory(context.symbolTable.getLastUsedAddr());
+    assignNode = AssignNode(memory);
+    conditionNode = ConditionNode(memory);
     processNode(context.astRoot);
     saveInstructionsToFile();
     return exitCode;
@@ -82,6 +87,7 @@ void CodeGenerator::processNode(ASTNode *node) {
             processNode(ifStatementNode->condition);
             processNode(ifStatementNode->commands);
             if (ifStatementNode->elseCommands.has_value()) {
+                this->conditionNode.elseExist=true;
                 processNode(ifStatementNode->elseCommands.value());
             }
             break;
@@ -167,10 +173,12 @@ void CodeGenerator::processNode(ASTNode *node) {
         case EXPRESSION_NODE: {
             auto expressionNode =
                 ast::ASTNodeFactory::castNode<ast::ExpressionNode>(node);
-            if (expressionNode->value2.has_value())
-            {
+            if (expressionNode->value2.has_value()) {
                 assignNode.waitForThirdArg = true;
-                assignNode.operation = static_cast<AssignOperation>(expressionNode->mathOperation.value());
+                assignNode.operation = static_cast<AssignOperation>(
+                    expressionNode->mathOperation
+                        .value());  // be careful here - enums may be not mapped
+                                    // in exactly same way
             }
             processNode(expressionNode->value1);
             if (expressionNode->value2.has_value()) {
@@ -181,6 +189,9 @@ void CodeGenerator::processNode(ASTNode *node) {
         case CONDITION_NODE: {
             auto conditionNode =
                 ast::ASTNodeFactory::castNode<ast::ConditionNode>(node);
+            currentCommand = CONDITION;
+            this->conditionNode.operation =
+                static_cast<ConditionOperation>(conditionNode->relation); // be careful here - enums may be not mapped in exactly same way
             processNode(conditionNode->value1);
             processNode(conditionNode->value2);
             break;
@@ -261,7 +272,7 @@ void CodeGenerator::addAssign(std::vector<Instruction> &instructions) {
 }
 
 void CodeGenerator::addJumpIfAccIsTrue(int &jump) {
-    instructions.emplace_back(LOAD, accAddr);
+    instructions.emplace_back(LOAD, accAddr);  // is this neccessary?
     instructions.emplace_back(JPOS, jump);
     lineCounter++;
 }
@@ -269,7 +280,7 @@ void CodeGenerator::addJumpIfAccIsTrue(int &jump) {
 void CodeGenerator::addCommand(std::string &symbolName,
                                unsigned long &address) {
     switch (currentCommand) {
-        case READ:{
+        case READ: {
             addRead(address);
             currentCommand = UNDEFINED;
             break;
@@ -279,7 +290,17 @@ void CodeGenerator::addCommand(std::string &symbolName,
             currentCommand = UNDEFINED;
             break;
         }
-        case ASSIGN:{
+        case CONDITION: {
+            NodeReadyToGenerateCode res = conditionNode.addVariable(address);
+            if (res) {
+                auto instructions = conditionNode.generateCode();
+                addAssign(instructions);
+                conditionNode.clear();
+                currentCommand = UNDEFINED;
+            }
+            break;
+        }
+        case ASSIGN: {
             NodeReadyToGenerateCode res = assignNode.addVariable(address);
             if (res) {
                 auto instructions = assignNode.generateCode();
@@ -315,7 +336,6 @@ void CodeGenerator::addCommand(std::string &symbolName,
             break;
         }
     }
-
 }
 
 void CodeGenerator::saveInstructionsToFile() {
@@ -326,7 +346,10 @@ void CodeGenerator::saveInstructionsToFile() {
     }
 
     for (const auto &i : instructions) {
-        outFile << i.opcode << " " << i.value << std::endl;
+        if (i.opcode == HALF || i.opcode == HALT)
+            outFile << i.opcode << std::endl;
+        else
+            outFile << i.opcode << " " << i.value << std::endl;
     }
 
     outFile.close();

@@ -2,7 +2,7 @@
 
 namespace semana{
 
-SymbolTable::SymbolTable() : noProcedures(0), address(1){};  // address start from 1 because 0 is reserved for accumulator
+SymbolTable::SymbolTable() : noProcedures(0), address(1){};  // address start from 5 because 0 is reserved for accumulator
 
 ValidationMessage SymbolTable::openScope(ScopeType scopeType) {
     switch (scopeType) {
@@ -56,7 +56,6 @@ ValidationMessage SymbolTable::addSymbol(Symbol &symbol, RuntimeParams &runtimeP
     auto validatationMessage = validateDeclaration(symbol, runtimeParams);
     if (validatationMessage.errorType != GOOD) return validatationMessage;
 
-    // TODO assign address here
     auto symbolUniqueName = getSymbolUniqeName(symbol);
 
     if (runtimeParams.isProcedureDeclaration) {
@@ -301,6 +300,10 @@ int SymbolTable::getScopeByProcName(std::string &name){
 Symbol SymbolTable::getSymbolByName(std::string &name, int &scope){
     std::string symbolUniqueName = std::to_string(scope) + name;
     return symbols[symbolUniqueName];
+}
+
+unsigned long SymbolTable::getLastUsedAddr(){
+    return address;
 }
 
 }
