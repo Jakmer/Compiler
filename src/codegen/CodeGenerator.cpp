@@ -246,7 +246,6 @@ void CodeGenerator::processNode(ASTNode *node) {
             {
                 this->whileNode.operation =
                     static_cast<ConditionOperation>(conditionNode->relation);
-                std::cout<<this->whileNode.operation<<"\n";
             }
             processNode(conditionNode->value1);
             processNode(conditionNode->value2);

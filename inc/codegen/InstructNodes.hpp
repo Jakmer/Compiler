@@ -28,25 +28,68 @@ enum AssignOperation {
 
 enum ConditionOperation { EQ = 0, NEQ, LT, LE, GT, GE, UNDEF };
 
-class AssignNode {
+
+class Node {
    public:
-    AssignNode() = default;
-    AssignNode(Memory &memory)
+    Node() = default;
+    Node(Memory &memory)
         : steps(0),
           identifier1(0),
           identifier2(0),
           codeGenerated(false),
-          waitForThirdArg(false),
-          memory(memory),
-          operation(NOT_DEFINED) {}
-    ~AssignNode() = default;
+          memory(memory) {}
+    ~Node() = default;
 
     unsigned long identifier1;
     unsigned long identifier2;
+    bool codeGenerated;
+    std::string name;
+
+    virtual std::vector<Instruction> generateCode()=0;
+
+    virtual NodeReadyToGenerateCode addVariable(unsigned long &var) {
+        if (steps == 2)
+            throw std::runtime_error(
+                "All variable are set. Code should have been already "
+                "generated!");
+
+        if (steps == 0)
+            identifier1 = var;
+        else
+            identifier2 = var;
+
+        steps++;
+
+        return steps == 2 ? true : false;
+    }
+
+    virtual void clear() {
+        if (!codeGenerated)
+            throw std::runtime_error(
+                "Cannot clear until code from node will be generated! Finish "
+                "assignment first!");
+        identifier1 = 0;
+        identifier2 = 0;
+        codeGenerated = false;
+        steps = 0;
+        instructions.clear();
+    }
+
+   protected:
+    int steps;  // counter how many vars we already have - if 2 then generate
+    std::vector<Instruction> instructions;
+    Memory memory;
+};
+
+class AssignNode : public Node {
+   public:
+    AssignNode() = default;
+    AssignNode(Memory &memory) : Node(memory) {}
+    ~AssignNode() = default;
+
     std::optional<unsigned long> identifier3;
     AssignOperation operation;
     bool waitForThirdArg;
-    bool codeGenerated;
 
     std::vector<Instruction> generateCode() {
         if (!waitForThirdArg) {
@@ -314,32 +357,15 @@ class AssignNode {
         steps = 0;
         instructions.clear();
     }
-
-   private:
-    int steps;  // counter how many vars we already have - if 3 then generate
-    std::vector<Instruction> instructions;
-    Memory memory;
 };
 
-class ConditionNode {
+class ConditionNode : public Node{
    public:
-    unsigned long identifier1;
-    unsigned long identifier2;
     ConditionOperation operation;
     bool elseExist;
-    std::string name;
 
     ConditionNode() = default;
-
-    ConditionNode(Memory &memory)
-        : steps(0),
-          identifier1(0),
-          identifier2(0),
-          codeGenerated(false),
-          memory(memory),
-          elseExist(false),
-          operation(UNDEF) {}
-
+    ConditionNode(Memory &memory) : Node(memory), elseExist(false), operation(UNDEF) {}
     ~ConditionNode() = default;
 
     std::vector<Instruction> generateCode() {  // store result in acc
@@ -412,59 +438,15 @@ class ConditionNode {
 
         return instructions;
     }
-    NodeReadyToGenerateCode addVariable(unsigned long &var) {
-        if (steps == 2)
-            throw std::runtime_error(
-                "All variable are set. Code should have been already "
-                "generated!");
-
-        if (steps == 0)
-            identifier1 = var;
-        else
-            identifier2 = var;
-
-        steps++;
-
-        return steps == 2 ? true : false;
-    }
-
-    void clear() {
-        if (!codeGenerated)
-            throw std::runtime_error(
-                "Cannot clear until code from node will be generated! Finish "
-                "assignment first!");
-        identifier1 = 0;
-        identifier2 = 0;
-        codeGenerated = false;
-        steps = 0;
-        instructions.clear();
-    }
-
-   private:
-    int steps;
-    bool codeGenerated;
-    Memory memory;
-    std::vector<Instruction> instructions;
 };
 
 
-class RepeatNode {
+class RepeatNode : public Node {
    public:
-    unsigned long identifier1;
-    unsigned long identifier2;
     ConditionOperation operation;
-    std::string name;
 
     RepeatNode() = default;
-
-    RepeatNode(Memory &memory)
-        : steps(0),
-          identifier1(0),
-          identifier2(0),
-          codeGenerated(false),
-          memory(memory),
-          operation(UNDEF) {}
-
+    RepeatNode(Memory &memory) : Node(memory), operation(UNDEF) {}
     ~RepeatNode() = default;
 
     std::vector<Instruction> generateCode() {  // store result in acc
@@ -528,58 +510,14 @@ class RepeatNode {
 
         return instructions;
     }
-    NodeReadyToGenerateCode addVariable(unsigned long &var) {
-        if (steps == 2)
-            throw std::runtime_error(
-                "All variable are set. Code should have been already "
-                "generated!");
-
-        if (steps == 0)
-            identifier1 = var;
-        else
-            identifier2 = var;
-
-        steps++;
-
-        return steps == 2 ? true : false;
-    }
-
-    void clear() {
-        if (!codeGenerated)
-            throw std::runtime_error(
-                "Cannot clear until code from node will be generated! Finish "
-                "assignment first!");
-        identifier1 = 0;
-        identifier2 = 0;
-        codeGenerated = false;
-        steps = 0;
-        instructions.clear();
-    }
-
-   private:
-    int steps;
-    bool codeGenerated;
-    Memory memory;
-    std::vector<Instruction> instructions;
 };
 
-class WhileNode {
+class WhileNode : public Node {
    public:
-    unsigned long identifier1;
-    unsigned long identifier2;
     ConditionOperation operation;
-    std::string name;
 
     WhileNode() = default;
-
-    WhileNode(Memory &memory)
-        : steps(0),
-          identifier1(0),
-          identifier2(0),
-          codeGenerated(false),
-          memory(memory),
-          operation(UNDEF) {}
-
+    WhileNode(Memory &memory) : Node(memory), operation(UNDEF) {}
     ~WhileNode() = default;
 
     std::vector<Instruction> generateCode() {  // store result in acc
@@ -643,39 +581,6 @@ class WhileNode {
 
         return instructions;
     }
-    NodeReadyToGenerateCode addVariable(unsigned long &var) {
-        if (steps == 2)
-            throw std::runtime_error(
-                "All variable are set. Code should have been already "
-                "generated!");
-
-        if (steps == 0)
-            identifier1 = var;
-        else
-            identifier2 = var;
-
-        steps++;
-
-        return steps == 2 ? true : false;
-    }
-
-    void clear() {
-        if (!codeGenerated)
-            throw std::runtime_error(
-                "Cannot clear until code from node will be generated! Finish "
-                "assignment first!");
-        identifier1 = 0;
-        identifier2 = 0;
-        codeGenerated = false;
-        steps = 0;
-        instructions.clear();
-    }
-
-   private:
-    int steps;
-    bool codeGenerated;
-    Memory memory;
-    std::vector<Instruction> instructions;
 };
 
 }  // namespace codegen
