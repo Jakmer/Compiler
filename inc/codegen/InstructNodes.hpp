@@ -445,6 +445,122 @@ class ConditionNode {
     std::vector<Instruction> instructions;
 };
 
+
+class RepeatNode {
+   public:
+    unsigned long identifier1;
+    unsigned long identifier2;
+    ConditionOperation operation;
+    std::string name;
+
+    RepeatNode() = default;
+
+    RepeatNode(Memory &memory)
+        : steps(0),
+          identifier1(0),
+          identifier2(0),
+          codeGenerated(false),
+          memory(memory),
+          operation(UNDEF) {}
+
+    ~RepeatNode() = default;
+
+    std::vector<Instruction> generateCode() {  // store result in acc
+        auto freeReg2 = memory.getFreeRegister();
+        memory.lockReg(freeReg2);
+        instructions.emplace_back(LOAD, identifier2);
+        instructions.emplace_back(STORE, freeReg2);
+
+        auto freeReg1 = memory.getFreeRegister();
+        memory.lockReg(freeReg1);
+        instructions.emplace_back(LOAD, identifier1);
+        instructions.emplace_back(STORE, freeReg1);
+
+        std::string jumpToBegining = name;
+        std::string jumpToBeginingInc = name+":inc";
+
+        switch (operation) {
+            case EQ: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JZERO, jumpToBegining);
+                break;
+            }
+            case NEQ: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JPOS, jumpToBeginingInc);
+                instructions.emplace_back(JNEG, jumpToBegining);
+                break;
+            }
+            case GT: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JPOS, jumpToBegining);
+                break;
+            }
+            case LT: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JNEG, jumpToBeginingInc);
+                break;
+            }
+            case GE: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JZERO, jumpToBeginingInc);
+                instructions.emplace_back(JPOS, jumpToBegining);
+                break;
+            }
+            case LE: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JNEG, jumpToBeginingInc);
+                instructions.emplace_back(JPOS, jumpToBegining);
+                break;
+            }
+            case UNDEF: {
+                throw std::runtime_error("No operation is set!");
+                break;
+            }
+        }
+
+        memory.unlockReg(freeReg1);
+        memory.unlockReg(freeReg2);
+
+        codeGenerated = true;
+
+        return instructions;
+    }
+    NodeReadyToGenerateCode addVariable(unsigned long &var) {
+        if (steps == 2)
+            throw std::runtime_error(
+                "All variable are set. Code should have been already "
+                "generated!");
+
+        if (steps == 0)
+            identifier1 = var;
+        else
+            identifier2 = var;
+
+        steps++;
+
+        return steps == 2 ? true : false;
+    }
+
+    void clear() {
+        if (!codeGenerated)
+            throw std::runtime_error(
+                "Cannot clear until code from node will be generated! Finish "
+                "assignment first!");
+        identifier1 = 0;
+        identifier2 = 0;
+        codeGenerated = false;
+        steps = 0;
+        instructions.clear();
+    }
+
+   private:
+    int steps;
+    bool codeGenerated;
+    Memory memory;
+    std::vector<Instruction> instructions;
+};
+
 }  // namespace codegen
 
 #endif  // !INSTRUCT_NODES_HPP

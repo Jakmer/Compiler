@@ -5,9 +5,13 @@ BEGIN
   k:= 100;
   n:=-10;
 
-  IF p=k THEN
+  IF p=n THEN
     WRITE 1;
   ELSE
     WRITE 0;
+  ENDIF
+
+  IF p=n THEN
+    WRITE 1;
   ENDIF
 END

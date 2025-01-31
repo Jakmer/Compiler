@@ -15,7 +15,7 @@ namespace codegen {
 
 struct Marker {
     std::string name;
-    int line;
+    long line;
     Marker(std::string &name, int &line) : name(name), line(line) {}
 };
 
@@ -37,7 +37,7 @@ class CodeGenerator {
     void setRValues();
     void saveInstructionsToFile();
     unsigned long getFreeRegister();
-    unsigned long getMarkerForName(std::string &name);
+    long getMarkerForName(std::string &name);
 
     semana::ExitCode exitCode;
     std::vector<Instruction> instructions;
@@ -49,8 +49,10 @@ class CodeGenerator {
     unsigned long accAddr;
     AssignNode assignNode;
     ConditionNode conditionNode;
+    RepeatNode repeatNode;
     Memory memory;
     int noConditions;
+    int noRepeats;
 };
 
 }  // namespace codegen

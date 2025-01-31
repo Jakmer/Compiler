@@ -1,0 +1,15 @@
+PROGRAM IS
+  n, p, k
+BEGIN
+  p:= 100;
+  k:= 100;
+  n:=-10;
+
+  REPEAT
+    WRITE n;
+  UNTIL n!=-10;
+
+  REPEAT
+    WRITE n;
+  UNTIL n=-10;
+END

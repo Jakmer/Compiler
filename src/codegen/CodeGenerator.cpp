@@ -21,6 +21,7 @@ CodeGenerator::CodeGenerator()
       lineCounter(0),
       exitCode(semana::SUCCESS),
       noConditions(0),
+      noRepeats(0),
       accAddr(0) {}
 
 CodeGenerator::~CodeGenerator() {}
@@ -30,6 +31,7 @@ semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
     memory = Memory(context.symbolTable.getLastUsedAddr());
     assignNode = AssignNode(memory);
     conditionNode = ConditionNode(memory);
+    repeatNode = RepeatNode(memory);
     setRValues();
     processNode(context.astRoot);
     saveInstructionsToFile();
@@ -98,7 +100,8 @@ void CodeGenerator::processNode(ASTNode *node) {
             auto currLineCounter1 = lineCounter;
             processNode(ifStatementNode->commands);
             auto currLineCounter2 = lineCounter;
-            auto relativePathDist = currLineCounter2 - currLineCounter1 + 2;    // +2 bc we need to jump over all commands and ending if jump
+            auto relativePathDist = currLineCounter2 - currLineCounter1 + 1;
+            if (ifStatementNode->elseCommands.has_value()) relativePathDist++;
             markers.emplace_back(label, relativePathDist);
             // find jump to label in instruction and change it to relative path
             if (ifStatementNode->elseCommands.has_value()) {
@@ -125,13 +128,17 @@ void CodeGenerator::processNode(ASTNode *node) {
         case REPEAT_STATEMENT_NODE: {
             auto repeatStatementNode =
                 ast::ASTNodeFactory::castNode<ast::RepeatStatementNode>(node);
-            auto currLineCounter = lineCounter;
-            currentCommand = REPEAT;
+            auto currLineCounter1 = lineCounter;
+            noRepeats++;
+            std::string label = "repeat" + std::to_string(noRepeats);
             processNode(repeatStatementNode->commands);
+            currentCommand = REPEAT;
+            this->repeatNode.name = label;
             processNode(repeatStatementNode->condition);
-            auto relativePathDist = currLineCounter - lineCounter;
-            // condition result should be put into acc
-            addJumpIfAccIsTrue(relativePathDist);
+            auto currLineCounter2 = lineCounter;
+            auto relativePathDist = currLineCounter1 - currLineCounter2 + 1;
+            std::cout << relativePathDist << std::endl;
+            markers.emplace_back(label, relativePathDist);
 
             break;
         }
@@ -215,6 +222,11 @@ void CodeGenerator::processNode(ASTNode *node) {
             this->conditionNode.operation = static_cast<ConditionOperation>(
                 conditionNode->relation);  // be careful here - enums may be not
                                            // mapped in exactly same way
+            if (currentCommand == REPEAT)
+            {
+                this->repeatNode.operation =
+                    static_cast<ConditionOperation>(conditionNode->relation);
+            }
             processNode(conditionNode->value1);
             processNode(conditionNode->value2);
             break;
@@ -302,7 +314,7 @@ void CodeGenerator::addAssign(std::vector<Instruction> &instructions) {
 void CodeGenerator::addJumpIfAccIsTrue(int &jump) {
     instructions.emplace_back(LOAD, accAddr);  // is this neccessary?
     instructions.emplace_back(JPOS, jump);
-    lineCounter++;
+    lineCounter += 2;
 }
 
 void CodeGenerator::addCommand(std::string &symbolName,
@@ -348,6 +360,13 @@ void CodeGenerator::addCommand(std::string &symbolName,
             break;
         }
         case REPEAT: {
+            NodeReadyToGenerateCode res = repeatNode.addVariable(address);
+            if (res) {
+                auto instructions = repeatNode.generateCode();
+                addAssign(instructions);
+                repeatNode.clear();
+                currentCommand = UNDEFINED;
+            }
             break;
         }
         case FOR_TO: {
@@ -376,10 +395,15 @@ void CodeGenerator::setRValues() {
     }
 }
 
-unsigned long CodeGenerator::getMarkerForName(std::string &name) {
+long CodeGenerator::getMarkerForName(std::string &name) {
     bool shouldBeIncremented = false;
+    bool shouldBeDecremented = false;
     if (name.find(":inc") != std::string::npos) {
         shouldBeIncremented = true;
+        name = name.substr(0, name.size() - 4);
+    }
+    if (name.find(":dec") != std::string::npos) {
+        shouldBeDecremented = true;
         name = name.substr(0, name.size() - 4);
     }
 
@@ -387,6 +411,7 @@ unsigned long CodeGenerator::getMarkerForName(std::string &name) {
         if (i.name == name) {
             auto jump = i.line;
             if (shouldBeIncremented) jump++;
+            if (shouldBeDecremented) jump--;
             return jump;
         }
     }
