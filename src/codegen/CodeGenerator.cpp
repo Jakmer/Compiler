@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "ASTNode.hpp"
 #include "ASTNodeFactory.hpp"
 #include "Command.hpp"
 #include "ErrorMessages.hpp"
@@ -23,6 +24,7 @@ CodeGenerator::CodeGenerator()
       noConditions(0),
       noRepeats(0),
       noWhiles(0),
+      noFors(0),
       accAddr(0) {}
 
 CodeGenerator::~CodeGenerator() {}
@@ -34,6 +36,7 @@ semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
     conditionNode = ConditionNode(memory);
     repeatNode = RepeatNode(memory);
     whileNode = WhileNode(memory);
+    forNode = ForNode(memory);
     setRValues();
     processNode(context.astRoot);
     saveInstructionsToFile();
@@ -123,8 +126,8 @@ void CodeGenerator::processNode(ASTNode *node) {
         case WHILE_STATEMENT_NODE: {
             auto whileStatementNode =
                 ast::ASTNodeFactory::castNode<ast::WhileStatementNode>(node);
-            currentCommand=WHILE;
-            noWhiles++; 
+            currentCommand = WHILE;
+            noWhiles++;
             std::string label1 = "while_cond" + std::to_string(noWhiles);
             this->whileNode.name = label1;
             auto currLineCounter1 = lineCounter;
@@ -154,15 +157,37 @@ void CodeGenerator::processNode(ASTNode *node) {
             auto currLineCounter2 = lineCounter;
             auto relativePathDist = currLineCounter1 - currLineCounter2 + 1;
             markers.emplace_back(label, relativePathDist);
-
             break;
         }
         case FOR_TO_NODE: {
             auto forToNode =
                 ast::ASTNodeFactory::castNode<ast::ForToNode>(node);
+            auto currentScope = getCurrentScope();
+            auto pidentifier = forToNode->pidentifier;
+            auto symbol =
+                context.symbolTable.getSymbolByName(pidentifier, currentScope);
+            auto symbolAddress = symbol.address;
+            noFors++;
+            currentCommand=FOR_TO;
+            this->forNode.iterator = symbolAddress;
+            auto currLineCounter1 = lineCounter;
+            std::string label1 = "beg_for_to" + std::to_string(noFors);
+            std::string label2 = "end_for_to" + std::to_string(noFors);
+            this->forNode.name = label2;
             processNode(forToNode->valueFrom);
             processNode(forToNode->valueTo);
             processNode(forToNode->commands);
+            // increment iterator
+            instructions.emplace_back(SET, 1);  // TODO: change it to reusing "1" rvalue instead of setting it in each iteration
+            instructions.emplace_back(ADD, symbolAddress);
+            instructions.emplace_back(STORE, symbolAddress);
+            instructions.emplace_back(JUMP, label1);
+            lineCounter+=4;
+            auto currLineCounter2 = lineCounter;
+            auto relativePathDist1 = currLineCounter1 - currLineCounter2 + 3;
+            auto relativePathDist2 = currLineCounter2 - currLineCounter1 - 4;
+            markers.emplace_back(label1, relativePathDist1);
+            markers.emplace_back(label2, relativePathDist2);
             break;
         }
         case FOR_DOWNTO_NODE: {
@@ -237,13 +262,11 @@ void CodeGenerator::processNode(ASTNode *node) {
             this->conditionNode.operation = static_cast<ConditionOperation>(
                 conditionNode->relation);  // be careful here - enums may be not
                                            // mapped in exactly same way
-            if (currentCommand == REPEAT)
-            {
+            if (currentCommand == REPEAT) {
                 this->repeatNode.operation =
                     static_cast<ConditionOperation>(conditionNode->relation);
             }
-            if (currentCommand == WHILE)
-            {
+            if (currentCommand == WHILE) {
                 this->whileNode.operation =
                     static_cast<ConditionOperation>(conditionNode->relation);
             }
@@ -385,7 +408,6 @@ void CodeGenerator::addCommand(std::string &symbolName,
                 currentCommand = UNDEFINED;
             }
             break;
-            break;
         }
         case REPEAT: {
             NodeReadyToGenerateCode res = repeatNode.addVariable(address);
@@ -398,9 +420,23 @@ void CodeGenerator::addCommand(std::string &symbolName,
             break;
         }
         case FOR_TO: {
+            NodeReadyToGenerateCode res = forNode.addVariable(address);
+            if (res) {
+                auto instructions = forNode.generateCode();
+                addAssign(instructions);
+                forNode.clear();
+                currentCommand = UNDEFINED;
+            }
             break;
         }
         case FORM_FROM: {
+            NodeReadyToGenerateCode res = forNode.addVariable(address);
+            if (res) {
+                auto instructions = forNode.generateCode();
+                addAssign(instructions);
+                forNode.clear();
+                currentCommand = UNDEFINED;
+            }
             break;
         }
         case PROC_CALL: {

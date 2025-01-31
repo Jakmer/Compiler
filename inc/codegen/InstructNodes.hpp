@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Command.hpp"
+#include "IdentifierNode.hpp"
 #include "Instructions.hpp"
 #include "Memory.hpp"
 
@@ -28,7 +29,6 @@ enum AssignOperation {
 
 enum ConditionOperation { EQ = 0, NEQ, LT, LE, GT, GE, UNDEF };
 
-
 class Node {
    public:
     Node() = default;
@@ -38,14 +38,14 @@ class Node {
           identifier2(0),
           codeGenerated(false),
           memory(memory) {}
-    ~Node() = default;
+    virtual ~Node() = default;
 
     unsigned long identifier1;
     unsigned long identifier2;
     bool codeGenerated;
     std::string name;
 
-    virtual std::vector<Instruction> generateCode()=0;
+    virtual std::vector<Instruction> generateCode() = 0;
 
     virtual NodeReadyToGenerateCode addVariable(unsigned long &var) {
         if (steps == 2)
@@ -84,8 +84,9 @@ class Node {
 class AssignNode : public Node {
    public:
     AssignNode() = default;
-    AssignNode(Memory &memory) : Node(memory) {}
-    ~AssignNode() = default;
+    AssignNode(Memory &memory)
+        : Node(memory), waitForThirdArg(false), operation(NOT_DEFINED) {}
+    virtual ~AssignNode() = default;
 
     std::optional<unsigned long> identifier3;
     AssignOperation operation;
@@ -359,14 +360,15 @@ class AssignNode : public Node {
     }
 };
 
-class ConditionNode : public Node{
+class ConditionNode : public Node {
    public:
     ConditionOperation operation;
     bool elseExist;
 
     ConditionNode() = default;
-    ConditionNode(Memory &memory) : Node(memory), elseExist(false), operation(UNDEF) {}
-    ~ConditionNode() = default;
+    ConditionNode(Memory &memory)
+        : Node(memory), elseExist(false), operation(UNDEF) {}
+    virtual ~ConditionNode() = default;
 
     std::vector<Instruction> generateCode() {  // store result in acc
         auto freeReg2 = memory.getFreeRegister();
@@ -379,8 +381,11 @@ class ConditionNode : public Node{
         instructions.emplace_back(LOAD, identifier1);
         instructions.emplace_back(STORE, freeReg1);
 
-        std::string jumpOverIf = name;  // during generation replace jumpOverIf labe with marker standing by particular if label
-        std::string jumpOverIfIncremented = name+":inc";    // bc we have jump over "jumpOverIf" also
+        std::string jumpOverIf =
+            name;  // during generation replace jumpOverIf labe with marker
+                   // standing by particular if label
+        std::string jumpOverIfIncremented =
+            name + ":inc";  // bc we have jump over "jumpOverIf" also
 
         switch (operation) {
             case EQ: {
@@ -440,14 +445,13 @@ class ConditionNode : public Node{
     }
 };
 
-
 class RepeatNode : public Node {
    public:
     ConditionOperation operation;
 
     RepeatNode() = default;
     RepeatNode(Memory &memory) : Node(memory), operation(UNDEF) {}
-    ~RepeatNode() = default;
+    virtual ~RepeatNode() = default;
 
     std::vector<Instruction> generateCode() {  // store result in acc
         auto freeReg2 = memory.getFreeRegister();
@@ -461,7 +465,7 @@ class RepeatNode : public Node {
         instructions.emplace_back(STORE, freeReg1);
 
         std::string jumpToBegining = name;
-        std::string jumpToBeginingInc = name+":inc";
+        std::string jumpToBeginingInc = name + ":inc";
 
         switch (operation) {
             case EQ: {
@@ -518,7 +522,7 @@ class WhileNode : public Node {
 
     WhileNode() = default;
     WhileNode(Memory &memory) : Node(memory), operation(UNDEF) {}
-    ~WhileNode() = default;
+    virtual ~WhileNode() = default;
 
     std::vector<Instruction> generateCode() {  // store result in acc
         auto freeReg2 = memory.getFreeRegister();
@@ -532,7 +536,7 @@ class WhileNode : public Node {
         instructions.emplace_back(STORE, freeReg1);
 
         std::string jumpOverCommands = name;
-        std::string jumpOverCommandsInc = name+":inc";
+        std::string jumpOverCommandsInc = name + ":inc";
 
         switch (operation) {
             case EQ: {
@@ -576,6 +580,37 @@ class WhileNode : public Node {
 
         memory.unlockReg(freeReg1);
         memory.unlockReg(freeReg2);
+
+        codeGenerated = true;
+
+        return instructions;
+    }
+};
+
+enum ForMode { DOWN_STEP, UP_STEP, NOT_DEF};
+
+class ForNode : public Node {
+   public:
+    unsigned long iterator;
+    ForMode mode;
+
+    ForNode() = default;
+    ForNode(Memory &memory) : Node(memory), iterator(0), mode(NOT_DEF) {}
+    virtual ~ForNode() = default;
+
+    std::vector<Instruction> generateCode() {  // store result in acc
+
+        // assign iterator to from_val
+        instructions.emplace_back(LOAD, identifier1);
+        instructions.emplace_back(STORE, iterator);
+
+        std::string jumpOverCommands = name;
+        std::string jumpOverCommandsInc = name + ":inc";
+
+        // check if iterator reached to_val
+        instructions.emplace_back(LOAD, iterator);
+        instructions.emplace_back(SUB, identifier2);
+        instructions.emplace_back(JPOS, jumpOverCommands);
 
         codeGenerated = true;
 

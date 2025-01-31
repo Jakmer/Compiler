@@ -51,10 +51,12 @@ class CodeGenerator {
     ConditionNode conditionNode;
     RepeatNode repeatNode;
     WhileNode whileNode;
+    ForNode forNode;
     Memory memory;
     int noConditions;
     int noRepeats;
     int noWhiles;   // wrap these counters and nodes into struct
+    int noFors;
 };
 
 }  // namespace codegen

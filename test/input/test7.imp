@@ -1,0 +1,20 @@
+PROGRAM IS
+  n, p
+BEGIN
+  p:= 2;
+  n:=-10;
+
+  FOR i FROM n TO p DO WRITE i; WRITE i; ENDFOR
+
+  FOR i FROM -5 TO -2 DO 
+
+    WRITE 11111;
+
+    FOR j FROM 1 TO 3 DO 
+
+      WRITE 2;
+
+    ENDFOR
+
+  ENDFOR
+END
