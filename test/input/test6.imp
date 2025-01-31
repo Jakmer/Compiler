@@ -1,0 +1,8 @@
+PROGRAM IS
+  n, p
+BEGIN
+  p:= 2;
+  n:=-10;
+
+  WHILE n<2 DO WRITE n; n:=n+2; ENDWHILE
+END

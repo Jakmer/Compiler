@@ -13,6 +13,8 @@
 
 namespace codegen {
 
+// TODO: Nodes below are very redundant - make it more reusable
+
 using NodeReadyToGenerateCode = bool;
 
 enum AssignOperation {
@@ -24,7 +26,7 @@ enum AssignOperation {
     NOT_DEFINED,
 };
 
-enum ConditionOperation { EQ, NEQ, GT, LT, GE, LE, UNDEF };
+enum ConditionOperation { EQ = 0, NEQ, LT, LE, GT, GE, UNDEF };
 
 class AssignNode {
    public:
@@ -511,6 +513,121 @@ class RepeatNode {
                 instructions.emplace_back(SUB, freeReg2);
                 instructions.emplace_back(JNEG, jumpToBeginingInc);
                 instructions.emplace_back(JPOS, jumpToBegining);
+                break;
+            }
+            case UNDEF: {
+                throw std::runtime_error("No operation is set!");
+                break;
+            }
+        }
+
+        memory.unlockReg(freeReg1);
+        memory.unlockReg(freeReg2);
+
+        codeGenerated = true;
+
+        return instructions;
+    }
+    NodeReadyToGenerateCode addVariable(unsigned long &var) {
+        if (steps == 2)
+            throw std::runtime_error(
+                "All variable are set. Code should have been already "
+                "generated!");
+
+        if (steps == 0)
+            identifier1 = var;
+        else
+            identifier2 = var;
+
+        steps++;
+
+        return steps == 2 ? true : false;
+    }
+
+    void clear() {
+        if (!codeGenerated)
+            throw std::runtime_error(
+                "Cannot clear until code from node will be generated! Finish "
+                "assignment first!");
+        identifier1 = 0;
+        identifier2 = 0;
+        codeGenerated = false;
+        steps = 0;
+        instructions.clear();
+    }
+
+   private:
+    int steps;
+    bool codeGenerated;
+    Memory memory;
+    std::vector<Instruction> instructions;
+};
+
+class WhileNode {
+   public:
+    unsigned long identifier1;
+    unsigned long identifier2;
+    ConditionOperation operation;
+    std::string name;
+
+    WhileNode() = default;
+
+    WhileNode(Memory &memory)
+        : steps(0),
+          identifier1(0),
+          identifier2(0),
+          codeGenerated(false),
+          memory(memory),
+          operation(UNDEF) {}
+
+    ~WhileNode() = default;
+
+    std::vector<Instruction> generateCode() {  // store result in acc
+        auto freeReg2 = memory.getFreeRegister();
+        memory.lockReg(freeReg2);
+        instructions.emplace_back(LOAD, identifier2);
+        instructions.emplace_back(STORE, freeReg2);
+
+        auto freeReg1 = memory.getFreeRegister();
+        memory.lockReg(freeReg1);
+        instructions.emplace_back(LOAD, identifier1);
+        instructions.emplace_back(STORE, freeReg1);
+
+        std::string jumpOverCommands = name;
+        std::string jumpOverCommandsInc = name+":inc";
+
+        switch (operation) {
+            case EQ: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JPOS, jumpOverCommandsInc);
+                instructions.emplace_back(JNEG, jumpOverCommands);
+                break;
+            }
+            case NEQ: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JZERO, jumpOverCommands);
+                break;
+            }
+            case GT: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JNEG, jumpOverCommandsInc);
+                instructions.emplace_back(JZERO, jumpOverCommands);
+                break;
+            }
+            case LT: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JPOS, jumpOverCommandsInc);
+                instructions.emplace_back(JZERO, jumpOverCommands);
+                break;
+            }
+            case GE: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JNEG, jumpOverCommands);
+                break;
+            }
+            case LE: {
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(JPOS, jumpOverCommands);
                 break;
             }
             case UNDEF: {

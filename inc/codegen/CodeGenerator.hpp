@@ -50,9 +50,11 @@ class CodeGenerator {
     AssignNode assignNode;
     ConditionNode conditionNode;
     RepeatNode repeatNode;
+    WhileNode whileNode;
     Memory memory;
     int noConditions;
     int noRepeats;
+    int noWhiles;   // wrap these counters and nodes into struct
 };
 
 }  // namespace codegen

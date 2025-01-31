@@ -1,0 +1,9 @@
+PROGRAM IS
+  n, p
+BEGIN
+  p:= 2;
+  n:=-10;
+
+  n:=n*p;
+  WRITE n;
+END

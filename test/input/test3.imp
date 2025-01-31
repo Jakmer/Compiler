@@ -11,5 +11,6 @@ BEGIN
 
   REPEAT
     WRITE n;
-  UNTIL n=-10;
+    n:=n+1;
+  UNTIL n!=-5;
 END

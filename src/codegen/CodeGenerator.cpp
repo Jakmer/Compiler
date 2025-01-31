@@ -22,6 +22,7 @@ CodeGenerator::CodeGenerator()
       exitCode(semana::SUCCESS),
       noConditions(0),
       noRepeats(0),
+      noWhiles(0),
       accAddr(0) {}
 
 CodeGenerator::~CodeGenerator() {}
@@ -32,6 +33,7 @@ semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
     assignNode = AssignNode(memory);
     conditionNode = ConditionNode(memory);
     repeatNode = RepeatNode(memory);
+    whileNode = WhileNode(memory);
     setRValues();
     processNode(context.astRoot);
     saveInstructionsToFile();
@@ -121,8 +123,22 @@ void CodeGenerator::processNode(ASTNode *node) {
         case WHILE_STATEMENT_NODE: {
             auto whileStatementNode =
                 ast::ASTNodeFactory::castNode<ast::WhileStatementNode>(node);
+            currentCommand=WHILE;
+            noWhiles++; 
+            std::string label1 = "while_cond" + std::to_string(noWhiles);
+            this->whileNode.name = label1;
+            auto currLineCounter1 = lineCounter;
             processNode(whileStatementNode->condition);
+            auto currLineCounter2 = lineCounter;
             processNode(whileStatementNode->commands);
+            auto currLineCounter3 = lineCounter;
+            auto relativePathDist1 = currLineCounter3 - currLineCounter2 + 2;
+            auto relativePathDist2 = currLineCounter1 - currLineCounter3;
+            std::string label2 = "while_beg" + std::to_string(noWhiles);
+            markers.emplace_back(label1, relativePathDist1);
+            markers.emplace_back(label2, relativePathDist2);
+            instructions.emplace_back(JUMP, label2);
+            lineCounter++;
             break;
         }
         case REPEAT_STATEMENT_NODE: {
@@ -137,7 +153,6 @@ void CodeGenerator::processNode(ASTNode *node) {
             processNode(repeatStatementNode->condition);
             auto currLineCounter2 = lineCounter;
             auto relativePathDist = currLineCounter1 - currLineCounter2 + 1;
-            std::cout << relativePathDist << std::endl;
             markers.emplace_back(label, relativePathDist);
 
             break;
@@ -226,6 +241,12 @@ void CodeGenerator::processNode(ASTNode *node) {
             {
                 this->repeatNode.operation =
                     static_cast<ConditionOperation>(conditionNode->relation);
+            }
+            if (currentCommand == WHILE)
+            {
+                this->whileNode.operation =
+                    static_cast<ConditionOperation>(conditionNode->relation);
+                std::cout<<this->whileNode.operation<<"\n";
             }
             processNode(conditionNode->value1);
             processNode(conditionNode->value2);
@@ -357,6 +378,14 @@ void CodeGenerator::addCommand(std::string &symbolName,
             break;
         }
         case WHILE: {
+            NodeReadyToGenerateCode res = whileNode.addVariable(address);
+            if (res) {
+                auto instructions = whileNode.generateCode();
+                addAssign(instructions);
+                whileNode.clear();
+                currentCommand = UNDEFINED;
+            }
+            break;
             break;
         }
         case REPEAT: {

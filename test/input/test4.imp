@@ -1,0 +1,16 @@
+PROGRAM IS
+  n, p
+BEGIN
+  p:= 100;
+  n:=-10;
+
+  REPEAT
+    WRITE n;
+    p:=10;
+    REPEAT
+      WRITE p;
+      p:=p+1;
+    UNTIL p!=15;
+    n:=n+1;
+  UNTIL n!=0;
+END
