@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y flex bison build-essential libfl-dev valgrind python3 python3-pip
+        sudo apt-get install -y flex bison build-essential libfl-dev valgrind python3 python3-pip libcln-dev
 
     - name: Set up CMake
       uses: lukka/get-cmake@latest
