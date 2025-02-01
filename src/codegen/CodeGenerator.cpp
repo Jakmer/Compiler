@@ -1,5 +1,6 @@
 #include "CodeGenerator.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -168,7 +169,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 context.symbolTable.getSymbolByName(pidentifier, currentScope);
             auto symbolAddress = symbol.address;
             noFors++;
-            currentCommand=FOR_TO;
+            currentCommand = FOR_TO;
             this->forNode.iterator = symbolAddress;
             this->forNode.mode = UP_STEP;
             auto currLineCounter1 = lineCounter;
@@ -179,11 +180,13 @@ void CodeGenerator::processNode(ASTNode *node) {
             processNode(forToNode->valueTo);
             processNode(forToNode->commands);
             // increment iterator
-            instructions.emplace_back(SET, 1);  // TODO: change it to reusing "1" rvalue instead of setting it in each iteration
+            instructions.emplace_back(
+                SET, 1);  // TODO: change it to reusing "1" rvalue instead of
+                          // setting it in each iteration
             instructions.emplace_back(ADD, symbolAddress);
             instructions.emplace_back(STORE, symbolAddress);
             instructions.emplace_back(JUMP, label1);
-            lineCounter+=4;
+            lineCounter += 4;
             auto currLineCounter2 = lineCounter;
             auto relativePathDist1 = currLineCounter1 - currLineCounter2 + 3;
             auto relativePathDist2 = currLineCounter2 - currLineCounter1 - 4;
@@ -200,7 +203,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 context.symbolTable.getSymbolByName(pidentifier, currentScope);
             auto symbolAddress = symbol.address;
             noFors++;
-            currentCommand=FOR_DOWNTO;
+            currentCommand = FOR_DOWNTO;
             this->forNode.iterator = symbolAddress;
             this->forNode.mode = DOWN_STEP;
             auto currLineCounter1 = lineCounter;
@@ -211,7 +214,9 @@ void CodeGenerator::processNode(ASTNode *node) {
             processNode(forDowntoNode->valueTo);
             processNode(forDowntoNode->commands);
             // increment iterator
-            instructions.emplace_back(SET, 1);  // TODO: change it to reusing "1" rvalue instead of setting it in each iteration
+            instructions.emplace_back(
+                SET, 1);  // TODO: change it to reusing "1" rvalue instead of
+                          // setting it in each iteration
             auto freeReg = memory.getFreeRegister();
             memory.lockReg(freeReg);
             instructions.emplace_back(STORE, freeReg);
@@ -219,7 +224,7 @@ void CodeGenerator::processNode(ASTNode *node) {
             instructions.emplace_back(SUB, freeReg);
             instructions.emplace_back(STORE, symbolAddress);
             instructions.emplace_back(JUMP, label1);
-            lineCounter+=6;
+            lineCounter += 6;
             auto currLineCounter2 = lineCounter;
             auto relativePathDist1 = currLineCounter1 - currLineCounter2 + 3;
             auto relativePathDist2 = currLineCounter2 - currLineCounter1 - 4;
@@ -339,15 +344,44 @@ void CodeGenerator::processNode(ASTNode *node) {
                 if (identifierNode->arrayNumIndex.has_value()) {
                     auto pidentifier2 = identifierNode->arrayNumIndex.value();
                     auto symbol2 = context.symbolTable.getSymbolByName(
-                        pidentifier, currentScope);
-                    auto symbolAddress2 = symbol.address;
+                        pidentifier2, currentScope);
+                    auto symbolAddress2 = symbol2.address;
+                    // we have to:
+                    // freeReg = memory.getFreeRegister()
+                    // SET symbolAddress
+                    // STORE freeReg
+                    // LOAD symbolAddress2
+                    // ADD freeReg
+                    // STORE freeReg
+                    // and then operate on LOADI freeReg
+                    // so pass freeReg
+                    auto pointer = memory.getFreeRegister();
+                    memory.lockReg(pointer);
+                    heap.push_back(pointer);
+                    instructions.emplace_back(SET, symbolAddress);
+                    instructions.emplace_back(STORE, pointer, true);
+                    instructions.emplace_back(LOAD, symbolAddress2);
+                    instructions.emplace_back(ADD, pointer, true);
+                    instructions.emplace_back(STORE, pointer, true);
+                    lineCounter += 5;
+                    addCommand(pidentifier, pointer);
                 }
                 if (identifierNode->arrayPidentifierIndex.has_value()) {
                     auto pidentifier2 =
                         identifierNode->arrayPidentifierIndex.value();
                     auto symbol2 = context.symbolTable.getSymbolByName(
-                        pidentifier, currentScope);
-                    auto symbolAddress2 = symbol.address;
+                        pidentifier2, currentScope);
+                    auto symbolAddress2 = symbol2.address;
+                    auto pointer = memory.getFreeRegister();
+                    memory.lockReg(pointer);
+                    heap.push_back(pointer);
+                    instructions.emplace_back(SET, symbolAddress);
+                    instructions.emplace_back(STORE, pointer, true);
+                    instructions.emplace_back(LOAD, symbolAddress2);
+                    instructions.emplace_back(ADD, pointer, true);
+                    instructions.emplace_back(STORE, pointer, true);
+                    lineCounter += 5;
+                    addCommand(pidentifier, pointer);
                 }
             }
             break;
@@ -368,11 +402,25 @@ void CodeGenerator::addHalt() {
 }
 
 void CodeGenerator::addWrite(unsigned long &address) {
+    auto it = std::find(heap.begin(), heap.end(), address);
+    if (it != heap.end()) {
+        instructions.emplace_back(LOADI, address);
+        instructions.emplace_back(PUT, 0);
+        lineCounter+=2;
+        return;
+    }
     instructions.emplace_back(PUT, address);
     lineCounter++;
 }
 
 void CodeGenerator::addRead(unsigned long &address) {
+    auto it = std::find(heap.begin(), heap.end(), address);
+    if (it != heap.end()) {
+        instructions.emplace_back(GET, 0);
+        instructions.emplace_back(STOREI, address);
+        lineCounter+=2;
+        return;
+    }
     instructions.emplace_back(GET, address);
     lineCounter++;
 }
@@ -527,11 +575,36 @@ void CodeGenerator::saveInstructionsToFile() {
             outFile << i.opcode << " " << jumpOverIf << std::endl;
         } else if (i.mode == RVALUE) {
             outFile << i.opcode << " " << i.label << std::endl;
-        } else
+        } else {
+            auto it = std::find(heap.begin(), heap.end(), i.value);
+            if (it != heap.end() && !i.doNotModify) updateOpcode(i.opcode);
             outFile << i.opcode << " " << i.value << std::endl;
+        }
     }
-
     outFile.close();
+}
+
+void CodeGenerator::updateOpcode(Opcode &opcode) {
+    switch (opcode) {
+        case LOAD: {
+            opcode = LOADI;
+            break;
+        }
+        case STORE: {
+            opcode = STOREI;
+            break;
+        }
+        case ADD: {
+            opcode = ADDI;
+            break;
+        }
+        case SUB: {
+            opcode = SUBI;
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 }  // namespace codegen

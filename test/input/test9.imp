@@ -1,0 +1,17 @@
+PROGRAM IS
+  n[0:10]
+BEGIN
+  n[0]:=1;
+  n[2]:=2;
+  WRITE n[0];
+  WRITE n[1];
+  WRITE n[2];
+
+  WRITE 1111111111111;
+
+
+  FOR j FROM 0 TO 10 DO 
+    n[j]:=j+10;
+    WRITE n[j];
+  ENDFOR
+END

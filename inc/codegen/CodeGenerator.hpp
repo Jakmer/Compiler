@@ -38,6 +38,7 @@ class CodeGenerator {
     void saveInstructionsToFile();
     unsigned long getFreeRegister();
     long getMarkerForName(std::string &name);
+    void updateOpcode(Opcode &opcode);
 
     semana::ExitCode exitCode;
     std::vector<Instruction> instructions;
@@ -57,6 +58,7 @@ class CodeGenerator {
     int noRepeats;
     int noWhiles;   // wrap these counters and nodes into struct
     int noFors;
+    std::vector<unsigned long> heap;
 };
 
 }  // namespace codegen
