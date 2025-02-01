@@ -17,6 +17,7 @@ class SymbolTable {
                                      semana::RuntimeParams &runtimeParams);
     Symbol getSymbolByName(std::string &name, int &scope);
     int getScopeByProcName(std::string &name);
+    unsigned long getProcedureAddr(std::string &name);
     std::vector<RValue> getRValues();
     unsigned long getLastUsedAddr();
 

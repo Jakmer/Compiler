@@ -13,6 +13,7 @@
 #include "InstructNodes.hpp"
 #include "Instructions.hpp"
 #include "Memory.hpp"
+#include "ProceduresNode.hpp"
 #include "SymbolTable.hpp"
 
 namespace codegen {
@@ -39,6 +40,7 @@ semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
     whileNode = WhileNode(memory);
     forNode = ForNode(memory);
     setRValues();
+    jumpToMain();
     processNode(context.astRoot);
     saveInstructionsToFile();
     return exitCode;
@@ -66,13 +68,24 @@ void CodeGenerator::processNode(ASTNode *node) {
                 processNode(proceduresNode->declarations.value());
             }
             processNode(proceduresNode->commands);
-            // jump to main
+ 
+            // jump back to main
+            auto procHeadNode =
+                ast::ASTNodeFactory::castNode<ast::ProcHeadNode>(proceduresNode->proc_head);
+            auto procName = procHeadNode->pidentifier;
+            auto returnReg = context.symbolTable.getProcedureAddr(procName);
+            instructions.emplace_back(RTRN, returnReg);
+            lineCounter++;
             break;
         }
         case MAIN_NODE: {
             auto mainNode = ast::ASTNodeFactory::castNode<ast::MainNode>(node);
             std::string mainName = "main";
-            markers.emplace_back(mainName, ++lineCounter);
+            auto it = std::find_if(markers.begin(), markers.end(),
+                                   [&mainName](const Marker &marker) {
+                                       return marker.name == mainName;
+                                   });
+            it->line+=lineCounter;
             currentProcName = mainName;
             processNode(mainNode->declarations);
             processNode(mainNode->commands);
@@ -116,6 +129,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 this->conditionNode.name = label;
                 this->conditionNode.elseExist = true;
                 instructions.emplace_back(JUMP, label);
+                // lineCounter++ ??
                 auto currLineCounter1 = lineCounter;
                 processNode(ifStatementNode->elseCommands.value());
                 auto currLineCounter2 = lineCounter;
@@ -236,6 +250,24 @@ void CodeGenerator::processNode(ASTNode *node) {
             auto procCallNode =
                 ast::ASTNodeFactory::castNode<ast::ProcCallNode>(node);
             processNode(procCallNode->args);
+
+            // prepare return register
+            
+            auto procName = procCallNode->pidentifier;
+            auto procAddr = context.symbolTable.getProcedureAddr(procName);
+            instructions.emplace_back(SET, lineCounter+3);
+            instructions.emplace_back(STORE, procAddr);
+            lineCounter+=2;
+
+            // jump to procedure
+            auto currLine = lineCounter;
+            auto it = std::find_if(markers.begin(), markers.end(),
+                                   [&procName](const Marker &marker) {
+                                       return marker.name == procName;
+                                   });
+            auto jump = it->line - currLine;
+            instructions.emplace_back(JUMP, jump);
+            lineCounter++;
             break;
         }
         case READ_NODE: {
@@ -256,7 +288,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 ast::ASTNodeFactory::castNode<ast::ProcHeadNode>(node);
             auto procedureName = procHeadNode->pidentifier;
             currentProcName = procedureName;
-            markers.emplace_back(procedureName, ++lineCounter);
+            markers.emplace_back(procedureName, lineCounter);
             processNode(procHeadNode->args_decl);
             break;
         }
@@ -356,7 +388,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                     // and then operate on LOADI freeReg
                     // so pass freeReg
                     auto pointer = memory.getFreeRegister();
-                    memory.lockReg(pointer);    // needs to be unlocked
+                    memory.lockReg(pointer);  // needs to be unlocked
                     heap.push_back(pointer);
                     instructions.emplace_back(SET, symbolAddress);
                     instructions.emplace_back(STORE, pointer, true);
@@ -406,7 +438,7 @@ void CodeGenerator::addWrite(unsigned long &address) {
     if (it != heap.end()) {
         instructions.emplace_back(LOADI, address);
         instructions.emplace_back(PUT, 0);
-        lineCounter+=2;
+        lineCounter += 2;
         return;
     }
     instructions.emplace_back(PUT, address);
@@ -418,7 +450,7 @@ void CodeGenerator::addRead(unsigned long &address) {
     if (it != heap.end()) {
         instructions.emplace_back(GET, 0);
         instructions.emplace_back(STOREI, address);
-        lineCounter+=2;
+        lineCounter += 2;
         return;
     }
     instructions.emplace_back(GET, address);
@@ -605,6 +637,14 @@ void CodeGenerator::updateOpcode(Opcode &opcode) {
         default:
             break;
     }
+}
+
+void CodeGenerator::jumpToMain(){
+    std::string label = "main";
+    auto reduction = lineCounter * -1;
+    markers.emplace_back(label, reduction);
+    instructions.emplace_back(JUMP, label);
+    lineCounter++;
 }
 
 }  // namespace codegen

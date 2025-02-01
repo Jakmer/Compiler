@@ -1,0 +1,17 @@
+PROCEDURE write(n) IS
+BEGIN
+  WRITE n;
+END
+
+PROCEDURE read(n) IS
+BEGIN
+  READ n;
+END
+
+PROGRAM IS
+  n
+BEGIN
+  n:=23;
+  read(n);
+  write(n);
+END

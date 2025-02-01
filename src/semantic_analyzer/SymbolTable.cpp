@@ -5,8 +5,8 @@
 namespace semana {
 
 SymbolTable::SymbolTable()
-    : noProcedures(0), address(1) {
-      };  // address start from 5 because 0 is reserved for accumulator
+    : noProcedures(0), address(2) {
+      };  // address start from 2 because 0 is reserved for accumulator and 1 is reserved for return call
 
 ValidationMessage SymbolTable::openScope(ScopeType scopeType) {
     switch (scopeType) {
@@ -264,8 +264,8 @@ Symbol &SymbolTable::getLatestProcedureName(std::string &name) {
 
 void SymbolTable::assignAddress(Symbol &symbol) {
     if (symbol.symbolType == PROCEDURE) {
-        symbol.address = 0;  // TODO: make it unaddressable - its address is
-                             // define with assembler operations number
+        symbol.address = address;     // procedure address will be used as register storing return line 
+        address++;
         return;
     }
 
@@ -295,6 +295,12 @@ int SymbolTable::getScopeByProcName(std::string &name) {
 Symbol SymbolTable::getSymbolByName(std::string &name, int &scope) {
     std::string symbolUniqueName = std::to_string(scope) + name;
     return symbols[symbolUniqueName];
+}
+
+unsigned long SymbolTable::getProcedureAddr(std::string &name){
+    std::string symbolUniqueName = "procedure" + name;
+    auto procAddr = symbols[symbolUniqueName].address;
+    return procAddr;
 }
 
 unsigned long SymbolTable::getLastUsedAddr() { return address; }

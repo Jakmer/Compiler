@@ -44,6 +44,7 @@ def compare_outputs(actual_output, expected_output):
 def run_tests(test_directory, expected_output_directory):
     test_files = [f for f in os.listdir(test_directory) if f.startswith('test') and f.endswith('.imp.mr')]
     test_results = []
+    all_tests_passed = True
 
     for test_file in test_files:
         test_path = os.path.join(test_directory, test_file)
@@ -54,6 +55,7 @@ def run_tests(test_directory, expected_output_directory):
 
         if actual_output is None:
             test_results.append((test_file, "Error during execution"))
+            all_tests_passed = False
             continue
 
         expected_output_file = test_file.replace('.imp.mr', '.expected')
@@ -62,6 +64,7 @@ def run_tests(test_directory, expected_output_directory):
 
         if expected_output is None:
             test_results.append((test_file, "Expected output file missing"))
+            all_tests_passed = False
             continue
 
         diff = compare_outputs(actual_output, expected_output)
@@ -69,11 +72,12 @@ def run_tests(test_directory, expected_output_directory):
         if diff:
             test_results.append((test_file, "Test failed"))
             print("\n".join(diff))
+            all_tests_passed = False
         else:
             test_results.append((test_file, "Test passed successfully!"))
             print(f"Test {test_file} passed successfully!")
 
-    return test_results
+    return -1 if not all_tests_passed else 0
 
 def print_test_results(test_results):
     print("\nTest results:")
@@ -83,5 +87,5 @@ def print_test_results(test_results):
 if __name__ == "__main__":
     test_directory = '../test/output'
     expected_output_directory = '../test/expected_vm_output'
-    test_results = run_tests(test_directory, expected_output_directory)
-    print_test_results(test_results)
+    exit_code = run_tests(test_directory, expected_output_directory)
+    exit(exit_code)

@@ -35,6 +35,7 @@ class CodeGenerator {
     void addAssign(std::vector<Instruction> &instructions);
     void addJumpIfAccIsTrue(int &jump);
     void setRValues();
+    void jumpToMain();
     void saveInstructionsToFile();
     unsigned long getFreeRegister();
     long getMarkerForName(std::string &name);
@@ -59,6 +60,7 @@ class CodeGenerator {
     int noWhiles;   // wrap these counters and nodes into struct
     int noFors;
     std::vector<unsigned long> heap;
+    std::stack<unsigned long> returnCalls;
 };
 
 }  // namespace codegen
