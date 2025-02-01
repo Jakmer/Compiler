@@ -1,0 +1,19 @@
+PROCEDURE write(n, T a, m) IS
+BEGIN
+  WRITE n;
+  WRITE m;
+END
+
+PROCEDURE writee(n, T a, m) IS
+BEGIN
+  WRITE a[4];
+END
+
+PROGRAM IS
+  n, k, array[0:10]
+BEGIN
+  n:=24;
+  k:=23;
+  array[4]:=-100;
+  write(n, array, k);
+END

@@ -20,6 +20,9 @@ class SymbolTable {
     unsigned long getProcedureAddr(std::string &name);
     std::vector<RValue> getRValues();
     unsigned long getLastUsedAddr();
+    unsigned long getAddrOfProcArg(std::string &procName, int &noArg);
+    void addProcArgs(std::string &procName, std::unordered_map<int, std::string> &args);
+    bool isProcArgument(std::string &argName, std::string &procName);
 
    private:
     ValidationMessage validateDeclaration(Symbol &symbol,
@@ -32,6 +35,7 @@ class SymbolTable {
     std::unordered_map<std::string, Symbol> symbols;  // name and symbol
     int noProcedures;
     unsigned long address;
+    std::unordered_map<std::string, std::unordered_map<int, std::string>> procedureArgs;
 };
 
 }  // namespace semana

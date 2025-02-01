@@ -5,6 +5,7 @@
 #include "AST.hpp"
 
 ast::ProgramAllNode* astRoot = nullptr;
+int argsDeclNum=0;
 
 extern int yylex();
 extern int yyparse();
@@ -205,6 +206,7 @@ command:
 
 proc_head:
     pidentifier LPAREN args_decl RPAREN {
+        argsDeclNum = 0;
         ast::ProcHeadNode* procHeadNode = new ast::ProcHeadNode();
         procHeadNode->pidentifier = $1;
         procHeadNode->setPosition(@1.first_line, @1.first_column);
@@ -266,6 +268,7 @@ args_decl:
     args_decl COMMA pidentifier {
         ast::ArgsDeclNode* argsDeclNode = dynamic_cast<ast::ArgsDeclNode*>($1);
         argsDeclNode->pidentifiers.push_back($3);
+        argsDeclNode->argsOrders[++argsDeclNum] = $3;
         argsDeclNode->setPosition(@3.first_line, @3.first_column);
         $$ = argsDeclNode;
         free($3);
@@ -273,6 +276,7 @@ args_decl:
     | args_decl COMMA T pidentifier {
         ast::ArgsDeclNode* argsDeclNode = dynamic_cast<ast::ArgsDeclNode*>($1);
         argsDeclNode->Tpidentifiers.push_back($4);
+        argsDeclNode->argsOrders[++argsDeclNum] = $4;
         argsDeclNode->setPosition(@4.first_line, @4.first_column);
         $$ = argsDeclNode;
         free($4);
@@ -280,6 +284,7 @@ args_decl:
     | pidentifier {
         ast::ArgsDeclNode* argsDeclNode = new ast::ArgsDeclNode();
         argsDeclNode->pidentifiers.push_back($1);
+        argsDeclNode->argsOrders[++argsDeclNum] = $1;
         argsDeclNode->setPosition(@1.first_line, @1.first_column);
         $$ = argsDeclNode;
         free($1);
@@ -287,6 +292,7 @@ args_decl:
     | T pidentifier {
         ast::ArgsDeclNode* argsDeclNode = new ast::ArgsDeclNode();
         argsDeclNode->Tpidentifiers.push_back($2);
+        argsDeclNode->argsOrders[++argsDeclNum] = $2;
         argsDeclNode->setPosition(@2.first_line, @2.first_column);
         $$ = argsDeclNode;
         free($2);

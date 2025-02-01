@@ -235,6 +235,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
         case ARGS_DECL_NODE: {
             auto argsDeclNode =
                 ast::ASTNodeFactory::castNode<ast::ArgsDeclNode>(node);
+            symbolTable.addProcArgs(runtimeParams.procCall.latestProcedureName, argsDeclNode->argsOrders);
             for(auto &pidentifer : argsDeclNode->pidentifiers)
             {
                 Symbol symbol(pidentifer, VARIABLE);
@@ -261,6 +262,7 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
             auto argsNode = ast::ASTNodeFactory::castNode<ast::ArgsNode>(node);
             for(auto &pidentifer : argsNode->pidentifiers)
             {
+                runtimeParams.procCall.noArg++;
                 Symbol symbol(pidentifer, PROCEDURE_ARG);
                 auto msg = symbolTable.validateSymbol(symbol, runtimeParams);
                 if(msg.errorType != GOOD)
@@ -268,7 +270,6 @@ void SemanticAnalyzer::processNode(ASTNode* node) {
                     auto location = getLocation(argsNode);
                     raiseError(msg, location);
                 }
-                runtimeParams.procCall.noArg++;
             }
             break;
         }

@@ -2,6 +2,8 @@
 #define PROCEDURES_NODE_HPP
 
 #include "ASTNode.hpp"
+
+#include <unordered_map>
 #include <optional>
 
 namespace ast {
@@ -33,6 +35,7 @@ class ProcHeadNode : public ASTNode {
 
 class ArgsDeclNode : public ASTNode {
    public:
+    std::unordered_map<int, std::string> argsOrders;
     std::vector<std::string> pidentifiers;
     std::vector<std::string> Tpidentifiers;
 

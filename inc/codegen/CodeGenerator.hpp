@@ -40,6 +40,8 @@ class CodeGenerator {
     unsigned long getFreeRegister();
     long getMarkerForName(std::string &name);
     void updateOpcode(Opcode &opcode);
+    bool isProcArgument(std::string &argName, int &scope);
+
 
     semana::ExitCode exitCode;
     std::vector<Instruction> instructions;
@@ -60,7 +62,7 @@ class CodeGenerator {
     int noWhiles;   // wrap these counters and nodes into struct
     int noFors;
     std::vector<unsigned long> heap;
-    std::stack<unsigned long> returnCalls;
+    std::string currProcCallName;
 };
 
 }  // namespace codegen

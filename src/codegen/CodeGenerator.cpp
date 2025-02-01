@@ -68,10 +68,11 @@ void CodeGenerator::processNode(ASTNode *node) {
                 processNode(proceduresNode->declarations.value());
             }
             processNode(proceduresNode->commands);
- 
+
             // jump back to main
             auto procHeadNode =
-                ast::ASTNodeFactory::castNode<ast::ProcHeadNode>(proceduresNode->proc_head);
+                ast::ASTNodeFactory::castNode<ast::ProcHeadNode>(
+                    proceduresNode->proc_head);
             auto procName = procHeadNode->pidentifier;
             auto returnReg = context.symbolTable.getProcedureAddr(procName);
             instructions.emplace_back(RTRN, returnReg);
@@ -85,7 +86,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                                    [&mainName](const Marker &marker) {
                                        return marker.name == mainName;
                                    });
-            it->line+=lineCounter;
+            it->line += lineCounter;
             currentProcName = mainName;
             processNode(mainNode->declarations);
             processNode(mainNode->commands);
@@ -249,15 +250,15 @@ void CodeGenerator::processNode(ASTNode *node) {
         case PROC_CALL_NODE: {
             auto procCallNode =
                 ast::ASTNodeFactory::castNode<ast::ProcCallNode>(node);
+            auto procName = procCallNode->pidentifier;
+            currProcCallName = procName;
             processNode(procCallNode->args);
 
             // prepare return register
-            
-            auto procName = procCallNode->pidentifier;
             auto procAddr = context.symbolTable.getProcedureAddr(procName);
-            instructions.emplace_back(SET, lineCounter+3);
+            instructions.emplace_back(SET, lineCounter + 3);
             instructions.emplace_back(STORE, procAddr);
-            lineCounter+=2;
+            lineCounter += 2;
 
             // jump to procedure
             auto currLine = lineCounter;
@@ -304,6 +305,31 @@ void CodeGenerator::processNode(ASTNode *node) {
         }
         case ARGS_NODE: {
             auto argsNode = ast::ASTNodeFactory::castNode<ast::ArgsNode>(node);
+
+            // set pointers in procedure
+            int noArgs = 0;
+            for (auto &arg : argsNode->pidentifiers) {
+                // addr = get addres of arg in main scope
+                // ptr = get addres of arg in procedure scope
+                // SET addr
+                // STORE ptr
+
+                noArgs++;
+                auto currentScope = getCurrentScope();
+                auto argSym =
+                    context.symbolTable.getSymbolByName(arg, currentScope);
+                auto argAddr = argSym.address;
+
+                auto procScope =
+                    context.symbolTable.getScopeByProcName(currProcCallName);
+                auto ptrAddr = context.symbolTable.getAddrOfProcArg(
+                    currProcCallName, noArgs);
+
+                heap.push_back(ptrAddr);
+                instructions.emplace_back(SET, argAddr);
+                instructions.emplace_back(STORE, ptrAddr, true);
+                lineCounter += 2;
+            }
             break;
         }
         case EXPRESSION_NODE: {
@@ -313,8 +339,8 @@ void CodeGenerator::processNode(ASTNode *node) {
                 assignNode.waitForThirdArg = true;
                 assignNode.operation = static_cast<AssignOperation>(
                     expressionNode->mathOperation
-                        .value());  // be careful here - enums may be not mapped
-                                    // in exactly same way
+                        .value());  // be careful here - enums may be not
+                                    // mapped in exactly same way
             }
             processNode(expressionNode->value1);
             if (expressionNode->value2.has_value()) {
@@ -326,8 +352,8 @@ void CodeGenerator::processNode(ASTNode *node) {
             auto conditionNode =
                 ast::ASTNodeFactory::castNode<ast::ConditionNode>(node);
             this->conditionNode.operation = static_cast<ConditionOperation>(
-                conditionNode->relation);  // be careful here - enums may be not
-                                           // mapped in exactly same way
+                conditionNode->relation);  // be careful here - enums may be
+                                           // not mapped in exactly same way
             if (currentCommand == REPEAT) {
                 this->repeatNode.operation =
                     static_cast<ConditionOperation>(conditionNode->relation);
@@ -365,6 +391,8 @@ void CodeGenerator::processNode(ASTNode *node) {
                 auto symbol = context.symbolTable.getSymbolByName(pidentifier,
                                                                   currentScope);
                 auto symbolAddress = symbol.address;
+                if (isProcArgument(pidentifier, currentScope))
+                    heap.push_back(symbolAddress);
                 addCommand(pidentifier, symbolAddress);
             }
             if (identifierNode->Tpidentifier.has_value()) {
@@ -372,6 +400,8 @@ void CodeGenerator::processNode(ASTNode *node) {
                 auto symbol = context.symbolTable.getSymbolByName(pidentifier,
                                                                   currentScope);
                 auto symbolAddress = symbol.address;
+                if (isProcArgument(pidentifier, currentScope))
+                    heap.push_back(symbolAddress);
 
                 if (identifierNode->arrayNumIndex.has_value()) {
                     auto pidentifier2 = identifierNode->arrayNumIndex.value();
@@ -639,12 +669,16 @@ void CodeGenerator::updateOpcode(Opcode &opcode) {
     }
 }
 
-void CodeGenerator::jumpToMain(){
+void CodeGenerator::jumpToMain() {
     std::string label = "main";
     auto reduction = lineCounter * -1;
     markers.emplace_back(label, reduction);
     instructions.emplace_back(JUMP, label);
     lineCounter++;
+}
+
+bool CodeGenerator::isProcArgument(std::string &argName, int &scope) {
+    return context.symbolTable.isProcArgument(argName, currentProcName);
 }
 
 }  // namespace codegen

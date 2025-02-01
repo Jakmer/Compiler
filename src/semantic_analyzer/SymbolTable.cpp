@@ -1,12 +1,15 @@
 #include "SymbolTable.hpp"
 
+#include <string>
+
 #include "Symbol.hpp"
 
 namespace semana {
 
 SymbolTable::SymbolTable()
-    : noProcedures(0), address(2) {
-      };  // address start from 2 because 0 is reserved for accumulator and 1 is reserved for return call
+    : noProcedures(0),
+      address(2){};  // address start from 2 because 0 is reserved for
+                     // accumulator and 1 is reserved for return call
 
 ValidationMessage SymbolTable::openScope(ScopeType scopeType) {
     switch (scopeType) {
@@ -171,6 +174,7 @@ ValidationMessage SymbolTable::validateSymbol(
             break;
         }
         case PROCEDURE_ARG: {
+            std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAA\n";
             auto procedureSymbol = getLatestProcedureName(
                 runtimeParams.procCall.latestProcedureName);
             // check if procedure has arguments
@@ -178,11 +182,13 @@ ValidationMessage SymbolTable::validateSymbol(
                     procedureSymbol.value))
                 throw std::runtime_error("Procedure has no arguments!");
 
-            auto procedureArgs =
-                std::get<std::vector<std::string>>(procedureSymbol.value);
-            auto originalArgName =
-                procedureArgs.at(runtimeParams.procCall.noArg);
-            auto originalArgSymbol = symbols[originalArgName];
+            auto procName = runtimeParams.procCall.latestProcedureName;
+            auto procArgs = procedureArgs[procName];
+            auto originalArgName = procArgs[runtimeParams.procCall.noArg];
+            auto procScope = getScopeByProcName(procName);
+            auto originalUniqueName =
+                std::to_string(procScope) + originalArgName;
+            auto originalArgSymbol = symbols[originalUniqueName];
             auto expectedType = originalArgSymbol.symbolType;
             auto receivedType = declaredSymbol.symbolType;
 
@@ -264,7 +270,8 @@ Symbol &SymbolTable::getLatestProcedureName(std::string &name) {
 
 void SymbolTable::assignAddress(Symbol &symbol) {
     if (symbol.symbolType == PROCEDURE) {
-        symbol.address = address;     // procedure address will be used as register storing return line 
+        symbol.address = address;  // procedure address will be used as register
+                                   // storing return line
         address++;
         return;
     }
@@ -297,7 +304,7 @@ Symbol SymbolTable::getSymbolByName(std::string &name, int &scope) {
     return symbols[symbolUniqueName];
 }
 
-unsigned long SymbolTable::getProcedureAddr(std::string &name){
+unsigned long SymbolTable::getProcedureAddr(std::string &name) {
     std::string symbolUniqueName = "procedure" + name;
     auto procAddr = symbols[symbolUniqueName].address;
     return procAddr;
@@ -316,4 +323,30 @@ std::vector<RValue> SymbolTable::getRValues() {
 
     return rvalues;
 }
+
+void SymbolTable::addProcArgs(std::string &procName,
+                              std::unordered_map<int, std::string> &args) {
+    procedureArgs[procName] = args;
+}
+
+unsigned long SymbolTable::getAddrOfProcArg(std::string &procName, int &noArg) {
+    auto procSymbolName = "procedure" + procName;
+    auto procSymbol = symbols[procSymbolName];
+    auto procArgs = procedureArgs[procName];
+    auto argName = procArgs[noArg];
+    auto procScope = getScopeByProcName(procName);
+    auto argUniqueName = std::to_string(procScope) + argName;
+    auto argAddr = symbols[argUniqueName].address;
+    return argAddr;
+}
+
+bool SymbolTable::isProcArgument(std::string &argName, std::string &procName){
+    auto procArgs = procedureArgs[procName];
+
+    for(auto &[key, value] : procArgs){
+        if(value==argName) return true;
+    }
+    return false;
+}
+
 }  // namespace semana

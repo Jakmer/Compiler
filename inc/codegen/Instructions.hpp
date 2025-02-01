@@ -45,8 +45,8 @@ class Instruction {
     Instruction(Opcode opcode, std::string& label,
                 InstructionMode mode = LABEL)  // constructor for label jump
         : opcode(opcode), label(label), mode(mode), doNotModify(false), value(0) {}
-    Instruction(Opcode opcode, long value, bool treatAsPointer)
-        : opcode(opcode), value(value), mode(VALUE), doNotModify(treatAsPointer), label("") {}
+    Instruction(Opcode opcode, long value, bool doNotModify)
+        : opcode(opcode), value(value), mode(VALUE), doNotModify(doNotModify), label("") {}
 
     static long getExecutionTime(Opcode opcode) {
         return executionTimes[opcode];
