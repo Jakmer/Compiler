@@ -356,7 +356,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                     // and then operate on LOADI freeReg
                     // so pass freeReg
                     auto pointer = memory.getFreeRegister();
-                    memory.lockReg(pointer);
+                    memory.lockReg(pointer);    // needs to be unlocked
                     heap.push_back(pointer);
                     instructions.emplace_back(SET, symbolAddress);
                     instructions.emplace_back(STORE, pointer, true);

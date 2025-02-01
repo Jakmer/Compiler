@@ -4,6 +4,6 @@ BEGIN
   p:= 2;
   n:=-10;
 
-  n:=n*p;
+ # n:=n*p;
   WRITE n;
 END

@@ -276,7 +276,11 @@ void SymbolTable::assignAddress(Symbol &symbol) {
         std::string beginning = std::get<ast::array>(symbol.value).num1;
         std::string end = std::get<ast::array>(symbol.value).num2;
         unsigned long size = std::stoul(end) - std::stoul(beginning) + 1;
+        // TODO: check max size
         address += size;
+        long zeroElemAddr = address - std::stoul(end);
+        // assign array[0] address to array name symbol
+        symbol.address = zeroElemAddr;
     } else {
         address++;
     }

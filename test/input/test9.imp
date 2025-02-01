@@ -1,5 +1,5 @@
 PROGRAM IS
-  n[0:10]
+  n[0:10], array[-10:10]
 BEGIN
   n[0]:=1;
   n[2]:=2;
@@ -13,5 +13,12 @@ BEGIN
   FOR j FROM 0 TO 10 DO 
     n[j]:=j+10;
     WRITE n[j];
+  ENDFOR
+
+  WRITE 1111111111111;
+
+  FOR j FROM -10 TO 10 DO 
+    array[j]:=j+200;
+    WRITE array[j];
   ENDFOR
 END
