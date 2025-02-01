@@ -4,13 +4,13 @@ BEGIN
   p:= 2;
   n:=-10;
 
-  FOR i FROM n TO p DO WRITE i; WRITE i; ENDFOR
+  FOR i FROM p DOWNTO n DO WRITE i; WRITE i; ENDFOR
 
-  FOR i FROM -5 TO -2 DO 
+  FOR i FROM 5 DOWNTO -2 DO 
 
     WRITE 11111;
 
-    FOR j FROM 1 TO 3 DO 
+    FOR j FROM 1 DOWNTO 3 DO 
 
       WRITE 2;
 
@@ -21,7 +21,7 @@ BEGIN
 
   WRITE 2222222;
 
-  FOR i FROM 10 TO 2 DO 
+  FOR i FROM 10 DOWNTO 2 DO 
     WRITE -10;
   ENDFOR
 END

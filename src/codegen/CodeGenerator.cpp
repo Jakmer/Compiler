@@ -170,6 +170,7 @@ void CodeGenerator::processNode(ASTNode *node) {
             noFors++;
             currentCommand=FOR_TO;
             this->forNode.iterator = symbolAddress;
+            this->forNode.mode = UP_STEP;
             auto currLineCounter1 = lineCounter;
             std::string label1 = "beg_for_to" + std::to_string(noFors);
             std::string label2 = "end_for_to" + std::to_string(noFors);
@@ -193,9 +194,37 @@ void CodeGenerator::processNode(ASTNode *node) {
         case FOR_DOWNTO_NODE: {
             auto forDowntoNode =
                 ast::ASTNodeFactory::castNode<ast::ForDowntoNode>(node);
+            auto currentScope = getCurrentScope();
+            auto pidentifier = forDowntoNode->pidentifier;
+            auto symbol =
+                context.symbolTable.getSymbolByName(pidentifier, currentScope);
+            auto symbolAddress = symbol.address;
+            noFors++;
+            currentCommand=FOR_DOWNTO;
+            this->forNode.iterator = symbolAddress;
+            this->forNode.mode = DOWN_STEP;
+            auto currLineCounter1 = lineCounter;
+            std::string label1 = "beg_for_down_to" + std::to_string(noFors);
+            std::string label2 = "end_for_down_to" + std::to_string(noFors);
+            this->forNode.name = label2;
             processNode(forDowntoNode->valueFrom);
             processNode(forDowntoNode->valueTo);
             processNode(forDowntoNode->commands);
+            // increment iterator
+            instructions.emplace_back(SET, 1);  // TODO: change it to reusing "1" rvalue instead of setting it in each iteration
+            auto freeReg = memory.getFreeRegister();
+            memory.lockReg(freeReg);
+            instructions.emplace_back(STORE, freeReg);
+            instructions.emplace_back(LOAD, symbolAddress);
+            instructions.emplace_back(SUB, freeReg);
+            instructions.emplace_back(STORE, symbolAddress);
+            instructions.emplace_back(JUMP, label1);
+            lineCounter+=6;
+            auto currLineCounter2 = lineCounter;
+            auto relativePathDist1 = currLineCounter1 - currLineCounter2 + 3;
+            auto relativePathDist2 = currLineCounter2 - currLineCounter1 - 4;
+            markers.emplace_back(label1, relativePathDist1);
+            markers.emplace_back(label2, relativePathDist2);
             break;
         }
         case PROC_CALL_NODE: {
@@ -429,7 +458,7 @@ void CodeGenerator::addCommand(std::string &symbolName,
             }
             break;
         }
-        case FORM_FROM: {
+        case FOR_DOWNTO: {
             NodeReadyToGenerateCode res = forNode.addVariable(address);
             if (res) {
                 auto instructions = forNode.generateCode();

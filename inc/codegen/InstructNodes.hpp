@@ -610,7 +610,10 @@ class ForNode : public Node {
         // check if iterator reached to_val
         instructions.emplace_back(LOAD, iterator);
         instructions.emplace_back(SUB, identifier2);
-        instructions.emplace_back(JPOS, jumpOverCommands);
+        if(mode == UP_STEP)
+            instructions.emplace_back(JPOS, jumpOverCommands);
+        else
+            instructions.emplace_back(JNEG, jumpOverCommands);
 
         codeGenerated = true;
 

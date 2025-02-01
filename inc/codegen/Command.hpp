@@ -12,7 +12,7 @@ enum Command {
     WHILE,
     REPEAT,
     FOR_TO,
-    FORM_FROM,
+    FOR_DOWNTO,
     PROC_CALL,
     UNDEFINED
 };
