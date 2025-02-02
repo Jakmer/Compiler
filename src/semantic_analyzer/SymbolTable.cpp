@@ -174,7 +174,6 @@ ValidationMessage SymbolTable::validateSymbol(
             break;
         }
         case PROCEDURE_ARG: {
-            std::cout << "AAAAAAAAAAAAAAAAAAAAAAAAA\n";
             auto procedureSymbol = getLatestProcedureName(
                 runtimeParams.procCall.latestProcedureName);
             // check if procedure has arguments
@@ -285,7 +284,7 @@ void SymbolTable::assignAddress(Symbol &symbol) {
         unsigned long size = std::stoul(end) - std::stoul(beginning) + 1;
         // TODO: check max size
         address += size;
-        long zeroElemAddr = address - std::stoul(end);
+        long zeroElemAddr = address - std::stoul(end) - 1;
         // assign array[0] address to array name symbol
         symbol.address = zeroElemAddr;
     } else {

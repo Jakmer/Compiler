@@ -1,0 +1,21 @@
+PROCEDURE write(T a) IS
+BEGIN
+  FOR i FROM 0 TO 10 DO
+    WRITE a[i];
+  ENDFOR
+END
+
+PROGRAM IS
+  array[0:10]
+BEGIN
+  FOR i FROM 0 TO 10 DO
+    array[i]:=i;
+  ENDFOR
+
+  FOR i FROM 0 TO 10 DO
+    WRITE array[i];
+  ENDFOR
+
+  WRITE 11111111111111;
+  write(array);
+END

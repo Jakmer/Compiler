@@ -309,11 +309,6 @@ void CodeGenerator::processNode(ASTNode *node) {
             // set pointers in procedure
             int noArgs = 0;
             for (auto &arg : argsNode->pidentifiers) {
-                // addr = get addres of arg in main scope
-                // ptr = get addres of arg in procedure scope
-                // SET addr
-                // STORE ptr
-
                 noArgs++;
                 auto currentScope = getCurrentScope();
                 auto argSym =
@@ -326,6 +321,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                     currProcCallName, noArgs);
 
                 heap.push_back(ptrAddr);
+
                 instructions.emplace_back(SET, argAddr);
                 instructions.emplace_back(STORE, ptrAddr, true);
                 lineCounter += 2;
@@ -400,50 +396,75 @@ void CodeGenerator::processNode(ASTNode *node) {
                 auto symbol = context.symbolTable.getSymbolByName(pidentifier,
                                                                   currentScope);
                 auto symbolAddress = symbol.address;
-                if (isProcArgument(pidentifier, currentScope))
-                    heap.push_back(symbolAddress);
+                if (isProcArgument(pidentifier, currentScope)) {
+                    auto pointer =
+                        context.symbolTable
+                            .getSymbolByName(pidentifier, currentScope)
+                            .address;
 
-                if (identifierNode->arrayNumIndex.has_value()) {
-                    auto pidentifier2 = identifierNode->arrayNumIndex.value();
-                    auto symbol2 = context.symbolTable.getSymbolByName(
-                        pidentifier2, currentScope);
-                    auto symbolAddress2 = symbol2.address;
-                    // we have to:
-                    // freeReg = memory.getFreeRegister()
-                    // SET symbolAddress
-                    // STORE freeReg
-                    // LOAD symbolAddress2
-                    // ADD freeReg
-                    // STORE freeReg
-                    // and then operate on LOADI freeReg
-                    // so pass freeReg
+                    auto newPointer = memory.getFreeRegister();
+                    memory.lockReg(newPointer);  // needs to be unlocked
+                    heap.push_back(newPointer);
+
+                    if (identifierNode->arrayNumIndex.has_value()) {
+                        auto pidentifier2 =
+                            identifierNode->arrayNumIndex.value();
+                        auto symbol2 = context.symbolTable.getSymbolByName(
+                            pidentifier2, currentScope);
+                        auto symbolAddress2 = symbol2.address;
+                        instructions.emplace_back(LOAD, pointer, true);
+                        instructions.emplace_back(ADD, symbolAddress2);
+                        instructions.emplace_back(STORE, newPointer, true);
+
+                        lineCounter += 3;
+                        addCommand(pidentifier, newPointer);
+                    }
+                    if (identifierNode->arrayPidentifierIndex.has_value()) {
+                        auto pidentifier2 =
+                            identifierNode->arrayPidentifierIndex.value();
+                        auto symbol2 = context.symbolTable.getSymbolByName(
+                            pidentifier2, currentScope);
+                        auto symbolAddress2 = symbol2.address;
+                        instructions.emplace_back(LOAD, pointer, true);
+                        instructions.emplace_back(ADD, symbolAddress2);
+                        instructions.emplace_back(STORE, newPointer, true);
+                        lineCounter += 3;
+                        addCommand(pidentifier, newPointer);
+                    }
+                } else {
                     auto pointer = memory.getFreeRegister();
                     memory.lockReg(pointer);  // needs to be unlocked
                     heap.push_back(pointer);
-                    instructions.emplace_back(SET, symbolAddress);
-                    instructions.emplace_back(STORE, pointer, true);
-                    instructions.emplace_back(LOAD, symbolAddress2);
-                    instructions.emplace_back(ADD, pointer, true);
-                    instructions.emplace_back(STORE, pointer, true);
-                    lineCounter += 5;
-                    addCommand(pidentifier, pointer);
-                }
-                if (identifierNode->arrayPidentifierIndex.has_value()) {
-                    auto pidentifier2 =
-                        identifierNode->arrayPidentifierIndex.value();
-                    auto symbol2 = context.symbolTable.getSymbolByName(
-                        pidentifier2, currentScope);
-                    auto symbolAddress2 = symbol2.address;
-                    auto pointer = memory.getFreeRegister();
-                    memory.lockReg(pointer);
-                    heap.push_back(pointer);
-                    instructions.emplace_back(SET, symbolAddress);
-                    instructions.emplace_back(STORE, pointer, true);
-                    instructions.emplace_back(LOAD, symbolAddress2);
-                    instructions.emplace_back(ADD, pointer, true);
-                    instructions.emplace_back(STORE, pointer, true);
-                    lineCounter += 5;
-                    addCommand(pidentifier, pointer);
+                    arrayPointers[symbolAddress] = pointer;
+
+                    if (identifierNode->arrayNumIndex.has_value()) {
+                        auto pidentifier2 =
+                            identifierNode->arrayNumIndex.value();
+                        auto symbol2 = context.symbolTable.getSymbolByName(
+                            pidentifier2, currentScope);
+                        auto symbolAddress2 = symbol2.address;
+                        instructions.emplace_back(SET, symbolAddress);
+                        instructions.emplace_back(STORE, pointer, true);
+                        instructions.emplace_back(LOAD, symbolAddress2);
+                        instructions.emplace_back(ADD, pointer, true);
+                        instructions.emplace_back(STORE, pointer, true);
+                        lineCounter += 5;
+                        addCommand(pidentifier, pointer);
+                    }
+                    if (identifierNode->arrayPidentifierIndex.has_value()) {
+                        auto pidentifier2 =
+                            identifierNode->arrayPidentifierIndex.value();
+                        auto symbol2 = context.symbolTable.getSymbolByName(
+                            pidentifier2, currentScope);
+                        auto symbolAddress2 = symbol2.address;
+                        instructions.emplace_back(SET, symbolAddress);
+                        instructions.emplace_back(STORE, pointer, true);
+                        instructions.emplace_back(LOAD, symbolAddress2);
+                        instructions.emplace_back(ADD, pointer, true);
+                        instructions.emplace_back(STORE, pointer, true);
+                        lineCounter += 5;
+                        addCommand(pidentifier, pointer);
+                    }
                 }
             }
             break;

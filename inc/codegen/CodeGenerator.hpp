@@ -1,6 +1,7 @@
 #ifndef CODE_GENERATOR_HPP
 #define CODE_GENERATOR_HPP
 
+#include <unordered_map>
 #include <vector>
 
 #include "ASTNode.hpp"
@@ -62,6 +63,7 @@ class CodeGenerator {
     int noWhiles;   // wrap these counters and nodes into struct
     int noFors;
     std::vector<unsigned long> heap;
+    std::unordered_map<unsigned long, unsigned long> arrayPointers;
     std::string currProcCallName;
 };
 
