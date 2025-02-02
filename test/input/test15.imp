@@ -1,0 +1,24 @@
+PROGRAM IS
+  a, b, c
+BEGIN
+  a:= 10;
+  b:= -0;
+  c:=a/b;
+  WRITE c;
+  a:= 10;
+  b:= 3;
+  c:=a/b;
+  WRITE c;
+  a:= -110;
+  b:= -12;
+  c:=a/b;
+  WRITE c;
+  a:= 10;
+  b:= -5;
+  c:=a/b;
+  WRITE c;
+  a:= 13;
+  b:= 2;
+  c:=a/b;
+  WRITE c;
+END

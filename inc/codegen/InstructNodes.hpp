@@ -100,22 +100,26 @@ class AssignNode : public Node {
             return instructions;
         }
 
-        instructions.emplace_back(LOAD, identifier2);
         if (!identifier3.has_value())
             throw std::runtime_error("Operation needs identifier3!");
 
         switch (operation) {
             case PLUS: {
+                instructions.emplace_back(LOAD, identifier2);
                 instructions.emplace_back(ADD, identifier3.value());
+                instructions.emplace_back(STORE, identifier1);
                 break;
             }
             case SUBSTRACT: {
+                instructions.emplace_back(LOAD, identifier2);
                 instructions.emplace_back(SUB, identifier3.value());
+                instructions.emplace_back(STORE, identifier1);
                 break;
             }
             case MULTIPLY: {
                 auto freeReg1 = memory.getFreeRegister();
                 memory.lockReg(freeReg1);
+                instructions.emplace_back(LOAD, identifier2);
                 instructions.emplace_back(STORE, freeReg1);
 
                 auto freeReg2 = memory.getFreeRegister();
@@ -132,10 +136,10 @@ class AssignNode : public Node {
                 auto freeReg6 = memory.getFreeRegister();
                 memory.lockReg(freeReg6);
 
-                int jump1=46;
-                int jump2=40;
-                int jump3=19;
-                int jump4=-20;
+                int jump1 = 46;
+                int jump2 = 40;
+                int jump3 = 19;
+                int jump4 = -20;
 
                 instructions.emplace_back(LOAD, freeReg1);
                 instructions.emplace_back(JZERO, jump1);
@@ -184,6 +188,7 @@ class AssignNode : public Node {
                 instructions.emplace_back(SUB, freeReg5);
                 instructions.emplace_back(JUMP, 2);
                 instructions.emplace_back(LOAD, freeReg5);
+                instructions.emplace_back(STORE, identifier1);
 
                 memory.unlockReg(freeReg1);
                 memory.unlockReg(freeReg2);
@@ -195,73 +200,172 @@ class AssignNode : public Node {
                 break;
             }
             case DIVIDE: {
-                // Integer division (a / b)
-                // Quotient will be in acc, remainder in freeReg3
+                auto dividend = memory.getFreeRegister();
+                memory.lockReg(dividend);
+                instructions.emplace_back(LOAD, identifier2);
+                instructions.emplace_back(STORE, dividend);
 
-                auto freeReg1 =
-                    memory.getFreeRegister();  // Register for dividend (a)
-                memory.lockReg(freeReg1);
-                instructions.emplace_back(STORE, freeReg1);
-
-                auto freeReg2 =
-                    memory.getFreeRegister();  // Register for divisor (b)
-                memory.lockReg(freeReg2);
+                auto divisor = memory.getFreeRegister();
+                memory.lockReg(divisor);
                 instructions.emplace_back(LOAD, identifier3.value());
-                instructions.emplace_back(STORE, freeReg2);
+                instructions.emplace_back(STORE, divisor);
 
-                auto freeReg3 =
-                    memory.getFreeRegister();  // Register for remainder
+                auto freeReg3 = memory.getFreeRegister();
                 memory.lockReg(freeReg3);
-                instructions.emplace_back(SET, 0);
-                instructions.emplace_back(STORE, freeReg3);
-
-                auto freeReg4 =
-                    memory.getFreeRegister();  // Register for quotient
+                auto freeReg4 = memory.getFreeRegister();
                 memory.lockReg(freeReg4);
+                auto freeReg5 = memory.getFreeRegister();
+                memory.lockReg(freeReg5);
+                auto freeReg6 = memory.getFreeRegister();
+                memory.lockReg(freeReg6);
+                auto freeReg7 = memory.getFreeRegister();
+                memory.lockReg(freeReg7);
+                auto freeReg8 = memory.getFreeRegister();
+                memory.lockReg(freeReg8);
+                auto freeReg9 = memory.getFreeRegister();
+                memory.lockReg(freeReg9);
+                auto freeReg10 = memory.getFreeRegister();
+                memory.lockReg(freeReg10);
+
+                instructions.emplace_back(SET, 1);
+                instructions.emplace_back(STORE, freeReg3);
                 instructions.emplace_back(SET, 0);
                 instructions.emplace_back(STORE, freeReg4);
-
-                // Handle division by zero
-                instructions.emplace_back(LOAD, freeReg2);
-                int jumpToEnd = 21;  // Adjusted jump to the end
-                instructions.emplace_back(JZERO, jumpToEnd);
-
-                // MAIN LOOP
-                int jumpToSubtract = 6;     // Jump to subtraction
-                int jumpToLoopStart = -12;  // Back to loop start
-
-                instructions.emplace_back(LOAD, freeReg1);
-                instructions.emplace_back(SUB, freeReg2);  // Check if a >= b
-                instructions.emplace_back(JNEG,
-                                          jumpToEnd);  // If a < b, exit loop
-
-                // Subtract b from a
-                instructions.emplace_back(LOAD, freeReg1);
-                instructions.emplace_back(SUB, freeReg2);
-                instructions.emplace_back(STORE,
-                                          freeReg1);  // Update dividend (a)
-
-                // Increment quotient
+                /*instructions.emplace_back(GET, dividend);*/
+                /*instructions.emplace_back(GET, divisor);*/
                 instructions.emplace_back(LOAD, freeReg4);
-                instructions.emplace_back(ADD, 1);
-                instructions.emplace_back(STORE, freeReg4);
-
-                // Jump back to loop start
-                instructions.emplace_back(JUMP, jumpToLoopStart);
-
-                // END
-                instructions.emplace_back(LOAD,
-                                          freeReg4);  // Load quotient into acc
-
-                // Store remainder
-                /*instructions.emplace_back(LOAD, freeReg1);*/
-                /*instructions.emplace_back(STORE, freeReg3);*/
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(LOAD, divisor);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(SUB, freeReg5);
+                instructions.emplace_back(JPOS, 5);
+                instructions.emplace_back(JNEG, 4);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(STORE, freeReg7);
+                instructions.emplace_back(JUMP, 112);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(STORE, freeReg8);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(LOAD, dividend);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(SUB, freeReg6);
+                instructions.emplace_back(JZERO, 4);
+                instructions.emplace_back(JPOS, 3);
+                instructions.emplace_back(LOAD, freeReg3);
+                instructions.emplace_back(STORE, freeReg8);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(LOAD, divisor);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(SUB, freeReg6);
+                instructions.emplace_back(JZERO, 5);
+                instructions.emplace_back(JPOS, 4);
+                instructions.emplace_back(LOAD, freeReg8);
+                instructions.emplace_back(ADD, freeReg3);
+                instructions.emplace_back(STORE, freeReg8);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(LOAD, dividend);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(SUB, freeReg6);
+                instructions.emplace_back(JZERO, 10);
+                instructions.emplace_back(JPOS, 9);
+                instructions.emplace_back(LOAD, dividend);
+                instructions.emplace_back(STORE, freeReg9);
+                instructions.emplace_back(LOAD, freeReg9);
+                instructions.emplace_back(SUB, freeReg9);
+                instructions.emplace_back(STORE, dividend);
+                instructions.emplace_back(LOAD, dividend);
+                instructions.emplace_back(SUB, freeReg9);
+                instructions.emplace_back(STORE, dividend);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(LOAD, divisor);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(SUB, freeReg6);
+                instructions.emplace_back(JZERO, 10);
+                instructions.emplace_back(JPOS, 9);
+                instructions.emplace_back(LOAD, divisor);
+                instructions.emplace_back(STORE, freeReg9);
+                instructions.emplace_back(LOAD, freeReg9);
+                instructions.emplace_back(SUB, freeReg9);
+                instructions.emplace_back(STORE, divisor);
+                instructions.emplace_back(LOAD, divisor);
+                instructions.emplace_back(SUB, freeReg9);
+                instructions.emplace_back(STORE, divisor);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(STORE, freeReg7);
+                instructions.emplace_back(LOAD, freeReg3);
+                instructions.emplace_back(STORE, freeReg10);
+                instructions.emplace_back(LOAD, divisor);
+                instructions.emplace_back(STORE, freeReg9);
+                instructions.emplace_back(LOAD, dividend);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(LOAD, freeReg9);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(SUB, freeReg5);
+                instructions.emplace_back(JPOS, 8);
+                instructions.emplace_back(LOAD, freeReg9);
+                instructions.emplace_back(ADD, freeReg9);
+                instructions.emplace_back(STORE, freeReg9);
+                instructions.emplace_back(LOAD, freeReg10);
+                instructions.emplace_back(ADD, freeReg10);
+                instructions.emplace_back(STORE, freeReg10);
+                instructions.emplace_back(JUMP, -12);
+                instructions.emplace_back(LOAD, freeReg3);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(LOAD, freeReg10);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(SUB, freeReg6);
+                instructions.emplace_back(JNEG, 21);
+                instructions.emplace_back(JZERO, 20);
+                instructions.emplace_back(LOAD, freeReg9);
+                instructions.emplace_back(HALF);
+                instructions.emplace_back(STORE, freeReg9);
+                instructions.emplace_back(LOAD, freeReg10);
+                instructions.emplace_back(HALF);
+                instructions.emplace_back(STORE, freeReg10);
+                instructions.emplace_back(LOAD, freeReg9);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(LOAD, dividend);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(SUB, freeReg6);
+                instructions.emplace_back(JNEG, 7);
+                instructions.emplace_back(LOAD, dividend);
+                instructions.emplace_back(SUB, freeReg9);
+                instructions.emplace_back(STORE, dividend);
+                instructions.emplace_back(LOAD, freeReg7);
+                instructions.emplace_back(ADD, freeReg10);
+                instructions.emplace_back(STORE, freeReg7);
+                instructions.emplace_back(JUMP, -25);
+                instructions.emplace_back(LOAD, freeReg3);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(LOAD, freeReg8);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(SUB, freeReg6);
+                instructions.emplace_back(JPOS, 10);
+                instructions.emplace_back(JNEG, 9);
+                instructions.emplace_back(LOAD, freeReg7);
+                instructions.emplace_back(STORE, freeReg9);
+                instructions.emplace_back(LOAD, freeReg7);
+                instructions.emplace_back(SUB, freeReg9);
+                instructions.emplace_back(STORE, freeReg7);
+                instructions.emplace_back(LOAD, freeReg7);
+                instructions.emplace_back(SUB, freeReg9);
+                instructions.emplace_back(STORE, freeReg7);
+                instructions.emplace_back(LOAD, freeReg7);
+                instructions.emplace_back(STORE, identifier1);
 
                 // Unlock registers
-                memory.unlockReg(freeReg1);
-                memory.unlockReg(freeReg2);
                 memory.unlockReg(freeReg3);
                 memory.unlockReg(freeReg4);
+                memory.unlockReg(freeReg5);
+                memory.unlockReg(freeReg6);
+                memory.unlockReg(freeReg7);
+                memory.unlockReg(freeReg8);
+                memory.unlockReg(freeReg9);
+                memory.unlockReg(freeReg10);
 
                 break;
             }
@@ -339,7 +443,6 @@ class AssignNode : public Node {
                 throw std::runtime_error("No operation is set!");
                 break;
         }
-        instructions.emplace_back(STORE, identifier1);
 
         codeGenerated = true;
         return instructions;
@@ -608,7 +711,7 @@ class WhileNode : public Node {
     }
 };
 
-enum ForMode { DOWN_STEP, UP_STEP, NOT_DEF};
+enum ForMode { DOWN_STEP, UP_STEP, NOT_DEF };
 
 class ForNode : public Node {
    public:
@@ -631,7 +734,7 @@ class ForNode : public Node {
         // check if iterator reached to_val
         instructions.emplace_back(LOAD, iterator);
         instructions.emplace_back(SUB, identifier2);
-        if(mode == UP_STEP)
+        if (mode == UP_STEP)
             instructions.emplace_back(JPOS, jumpOverCommands);
         else
             instructions.emplace_back(JNEG, jumpOverCommands);
