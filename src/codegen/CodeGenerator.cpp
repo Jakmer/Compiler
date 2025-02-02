@@ -322,7 +322,14 @@ void CodeGenerator::processNode(ASTNode *node) {
 
                 heap.push_back(ptrAddr);
 
-                instructions.emplace_back(SET, argAddr);
+                // if we call from another function (not main) then LOAD adres instead of
+                // setting bc argAddr will be already ptr type
+
+                if (currentProcName == "main") {
+                    instructions.emplace_back(SET, argAddr);
+                } else {
+                    instructions.emplace_back(LOAD, argAddr, true);
+                }
                 instructions.emplace_back(STORE, ptrAddr, true);
                 lineCounter += 2;
             }

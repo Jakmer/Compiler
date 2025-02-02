@@ -1,0 +1,19 @@
+PROCEDURE writee(T a) IS
+BEGIN
+    WRITE a[4];
+    WRITE a[0];
+END
+
+PROCEDURE write(T a) IS
+BEGIN
+    writee(a);
+    writee(a);
+END
+
+PROGRAM IS
+  array[0:10]
+BEGIN
+  array[0]:=2;
+  array[4]:=234;
+  write(array);
+END
