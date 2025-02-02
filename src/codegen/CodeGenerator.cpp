@@ -130,7 +130,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 this->conditionNode.name = label;
                 this->conditionNode.elseExist = true;
                 instructions.emplace_back(JUMP, label);
-                // lineCounter++ ??
+                lineCounter++;
                 auto currLineCounter1 = lineCounter;
                 processNode(ifStatementNode->elseCommands.value());
                 auto currLineCounter2 = lineCounter;
