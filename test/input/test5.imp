@@ -1,9 +1,20 @@
 PROGRAM IS
-  n, p
+  a, b, c
 BEGIN
-  p:= 2;
-  n:=-10;
-
- # n:=n*p;
-  WRITE n;
+  a:= -3;
+  b:=10;
+  c:=a*b;
+  WRITE c;
+  a:= 10;
+  b:= -2;
+  c:=a*b;
+  WRITE c;
+  a:= 3;
+  b:= 3;
+  c:=a*b;
+  WRITE c;
+  a:= -3;
+  b:=-3;
+  c:=a*b;
+  WRITE c;
 END

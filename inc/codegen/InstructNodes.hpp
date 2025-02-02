@@ -114,9 +114,6 @@ class AssignNode : public Node {
                 break;
             }
             case MULTIPLY: {
-                // Peasant multiplication
-                // result will be in acc
-
                 auto freeReg1 = memory.getFreeRegister();
                 memory.lockReg(freeReg1);
                 instructions.emplace_back(STORE, freeReg1);
@@ -128,48 +125,72 @@ class AssignNode : public Node {
 
                 auto freeReg3 = memory.getFreeRegister();
                 memory.lockReg(freeReg3);
-                // set to 0?
+                auto freeReg4 = memory.getFreeRegister();
+                memory.lockReg(freeReg4);
+                auto freeReg5 = memory.getFreeRegister();
+                memory.lockReg(freeReg5);
+                auto freeReg6 = memory.getFreeRegister();
+                memory.lockReg(freeReg6);
 
-                int jumpToEnd = 17;
-                int jumpToEven = 4;
-                int jumpToMainLoop = -17;
+                int jump1=46;
+                int jump2=40;
+                int jump3=19;
+                int jump4=-20;
 
-                // MAIN LOOP
                 instructions.emplace_back(LOAD, freeReg1);
-                instructions.emplace_back(JZERO, jumpToEnd);  // Jump to end
-
-                // Check if identifier1 is odd
-                instructions.emplace_back(LOAD, freeReg1);
-                instructions.emplace_back(HALF, freeReg1);
-                instructions.emplace_back(LOAD, freeReg1);
-                instructions.emplace_back(ADD, freeReg1);
+                instructions.emplace_back(JZERO, jump1);
+                instructions.emplace_back(JPOS, 3);
                 instructions.emplace_back(SUB, freeReg1);
-                instructions.emplace_back(JZERO, jumpToEven);
-
-                // If odd then add identifier2 to result
-                instructions.emplace_back(LOAD, freeReg3);
-                instructions.emplace_back(ADD, freeReg2);
+                instructions.emplace_back(SUB, freeReg1);
                 instructions.emplace_back(STORE, freeReg3);
-
-                // EVEN
-                instructions.emplace_back(LOAD, freeReg1);
-                instructions.emplace_back(HALF, freeReg1);
-                instructions.emplace_back(STORE, freeReg1);
-
-                // Multiply identifier2 * 2
                 instructions.emplace_back(LOAD, freeReg2);
-                instructions.emplace_back(ADD, freeReg2);
-                instructions.emplace_back(STORE, freeReg2);
-
-                // Jump to main loop
-                instructions.emplace_back(JUMP, jumpToMainLoop);
-
-                // END
+                instructions.emplace_back(JZERO, jump2);
+                instructions.emplace_back(JPOS, 3);
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(STORE, freeReg4);
+                instructions.emplace_back(SET, 0);
+                instructions.emplace_back(STORE, freeReg5);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(JPOS, 2);
+                instructions.emplace_back(JUMP, jump3);
+                instructions.emplace_back(HALF, 0);
+                instructions.emplace_back(ADD, 0);
+                instructions.emplace_back(SUB, freeReg4);
+                instructions.emplace_back(STORE, freeReg6);
+                instructions.emplace_back(SET, 1);
+                instructions.emplace_back(ADD, freeReg6);
+                instructions.emplace_back(JZERO, 2);
+                instructions.emplace_back(JUMP, 4);
+                instructions.emplace_back(LOAD, freeReg5);
+                instructions.emplace_back(ADD, freeReg3);
+                instructions.emplace_back(STORE, freeReg5);
                 instructions.emplace_back(LOAD, freeReg3);
+                instructions.emplace_back(ADD, freeReg3);
+                instructions.emplace_back(STORE, freeReg3);
+                instructions.emplace_back(LOAD, freeReg4);
+                instructions.emplace_back(HALF, 0);
+                instructions.emplace_back(STORE, freeReg4);
+                instructions.emplace_back(JUMP, jump4);
+                instructions.emplace_back(LOAD, freeReg1);
+                instructions.emplace_back(JPOS, 4);
+                instructions.emplace_back(LOAD, freeReg2);
+                instructions.emplace_back(JNEG, 8);
+                instructions.emplace_back(JUMP, 3);
+                instructions.emplace_back(LOAD, freeReg2);
+                instructions.emplace_back(JPOS, 5);
+                instructions.emplace_back(LOAD, freeReg5);
+                instructions.emplace_back(SUB, freeReg5);
+                instructions.emplace_back(SUB, freeReg5);
+                instructions.emplace_back(JUMP, 2);
+                instructions.emplace_back(LOAD, freeReg5);
 
                 memory.unlockReg(freeReg1);
                 memory.unlockReg(freeReg2);
                 memory.unlockReg(freeReg3);
+                memory.unlockReg(freeReg4);
+                memory.unlockReg(freeReg5);
+                memory.unlockReg(freeReg6);
 
                 break;
             }
