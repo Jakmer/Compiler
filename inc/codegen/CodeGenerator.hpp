@@ -22,9 +22,9 @@ struct Marker {
 
 class CodeGenerator {
    public:
-    CodeGenerator();
+    CodeGenerator(compiler::Context &context);
     ~CodeGenerator();
-    semana::ExitCode generateCode(compiler::Context &context);
+    semana::ExitCode generateCode();
 
    private:
     void processNode(ASTNode *node);

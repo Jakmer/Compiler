@@ -1,0 +1,18 @@
+PROCEDURE s(n) IS
+  a
+BEGIN
+  n:=111;
+END
+
+PROCEDURE funca(n) IS
+   a
+BEGIN
+  s(a);
+  WRITE a;
+END
+
+PROGRAM IS
+    n
+BEGIN
+    funca(n);
+END

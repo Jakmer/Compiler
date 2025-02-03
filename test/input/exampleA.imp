@@ -6,11 +6,11 @@ BEGIN
 	tc[n]:=n-tc[0];
         j:=tc[0]+1;
         FOR i FROM tc[0] DOWNTO tc[n] DO
-		ta[i]:=i;
-		tb[i]:=n-i;
+		ta[i]:=i+1;
+		tb[i]:=j-i;
 	ENDFOR
         j:=tc[n];
-        WHILE j<=tc[0] DO
+        WHILE j<tc[0] DO
 		tc[j]:=ta[j]*tb[j];
                 j:=j+1;
 	ENDWHILE

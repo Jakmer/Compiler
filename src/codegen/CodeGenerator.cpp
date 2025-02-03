@@ -9,6 +9,7 @@
 #include "ASTNode.hpp"
 #include "ASTNodeFactory.hpp"
 #include "Command.hpp"
+#include "Context.hpp"
 #include "ErrorMessages.hpp"
 #include "InstructNodes.hpp"
 #include "Instructions.hpp"
@@ -18,7 +19,7 @@
 
 namespace codegen {
 
-CodeGenerator::CodeGenerator()
+CodeGenerator::CodeGenerator(compiler::Context &context)
     : currentProcName(""),
       currentCommand(UNDEFINED),
       lineCounter(0),
@@ -27,18 +28,18 @@ CodeGenerator::CodeGenerator()
       noRepeats(0),
       noWhiles(0),
       noFors(0),
-      accAddr(0) {}
+      accAddr(0),
+      context(context),
+      memory(context.symbolTable.getLastUsedAddr()),
+      assignNode(memory),
+      conditionNode(memory),
+      repeatNode(memory),
+      whileNode(memory),
+      forNode(memory) {}
 
 CodeGenerator::~CodeGenerator() {}
 
-semana::ExitCode CodeGenerator::generateCode(compiler::Context &context) {
-    this->context = context;
-    memory = Memory(context.symbolTable.getLastUsedAddr());
-    assignNode = AssignNode(memory);
-    conditionNode = ConditionNode(memory);
-    repeatNode = RepeatNode(memory);
-    whileNode = WhileNode(memory);
-    forNode = ForNode(memory);
+semana::ExitCode CodeGenerator::generateCode() {
     setRValues();
     jumpToMain();
     processNode(context.astRoot);
@@ -322,10 +323,12 @@ void CodeGenerator::processNode(ASTNode *node) {
 
                 heap.push_back(ptrAddr);
 
-                // if we call from another function (not main) then LOAD adres instead of
-                // setting bc argAddr will be already ptr type
+                // if we call from another function (not main) then LOAD adres
+                // instead of setting bc argAddr will be already ptr type
 
-                if (currentProcName == "main" || (currentProcName!="main" && !isProcArgument(argSym.name, currentScope))) {
+                if (currentProcName == "main" ||
+                    (currentProcName != "main" &&
+                     !isProcArgument(argSym.name, currentScope))) {
                     instructions.emplace_back(SET, argAddr);
                 } else {
                     instructions.emplace_back(LOAD, argAddr, true);

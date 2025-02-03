@@ -9,6 +9,7 @@ output/
 log/
 valgrind_log/
 valgrind_output/
+note
 
 *.slo
 *.lo

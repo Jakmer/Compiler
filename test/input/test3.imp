@@ -7,10 +7,10 @@ BEGIN
 
   REPEAT
     WRITE n;
-  UNTIL n!=-10;
+  UNTIL n=-10;
 
   REPEAT
     WRITE n;
     n:=n+1;
-  UNTIL n!=-5;
+  UNTIL n=-5;
 END

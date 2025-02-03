@@ -10,7 +10,7 @@ BEGIN
     REPEAT
       WRITE p;
       p:=p+1;
-    UNTIL p!=15;
+    UNTIL p=15;
     n:=n+1;
-  UNTIL n!=0;
+  UNTIL n=0;
 END

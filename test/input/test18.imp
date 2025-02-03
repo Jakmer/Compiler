@@ -1,0 +1,23 @@
+PROCEDURE funca(T n) IS
+  p, i, tmp
+BEGIN
+  n[0]:=1;
+#  p:=n[0];
+  p:=1;
+  i:=1;
+  WRITE n[0];
+  WRITE p;
+  WRITE i;
+  tmp:=p*i;
+  WRITE tmp;
+  n[i]:=p*i;
+  WRITE p;
+  WRITE i;
+  WRITE n[i];
+END
+
+PROGRAM IS
+    n[0:10]
+BEGIN
+    funca(n);
+END

@@ -26,8 +26,8 @@ class Compiler {
             return exitCode;
         }
 
-        codegen::CodeGenerator codeGenerator;
-        exitCode = codeGenerator.generateCode(context);
+        codegen::CodeGenerator codeGenerator(context);
+        exitCode = codeGenerator.generateCode();
 
         return exitCode;
     }
