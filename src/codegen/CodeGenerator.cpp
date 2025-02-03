@@ -146,6 +146,7 @@ void CodeGenerator::processNode(ASTNode *node) {
             currentCommand = WHILE;
             noWhiles++;
             std::string label1 = "while_cond" + std::to_string(noWhiles);
+            std::string label2 = "while_beg" + std::to_string(noWhiles);
             this->whileNode.name = label1;
             auto currLineCounter1 = lineCounter;
             processNode(whileStatementNode->condition);
@@ -154,7 +155,6 @@ void CodeGenerator::processNode(ASTNode *node) {
             auto currLineCounter3 = lineCounter;
             auto relativePathDist1 = currLineCounter3 - currLineCounter2 + 2;
             auto relativePathDist2 = currLineCounter1 - currLineCounter3;
-            std::string label2 = "while_beg" + std::to_string(noWhiles);
             markers.emplace_back(label1, relativePathDist1);
             markers.emplace_back(label2, relativePathDist2);
             instructions.emplace_back(JUMP, label2);
