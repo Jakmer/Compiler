@@ -325,7 +325,7 @@ void CodeGenerator::processNode(ASTNode *node) {
                 // if we call from another function (not main) then LOAD adres instead of
                 // setting bc argAddr will be already ptr type
 
-                if (currentProcName == "main") {
+                if (currentProcName == "main" || (currentProcName!="main" && !isProcArgument(argSym.name, currentScope))) {
                     instructions.emplace_back(SET, argAddr);
                 } else {
                     instructions.emplace_back(LOAD, argAddr, true);
