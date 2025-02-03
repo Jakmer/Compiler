@@ -222,12 +222,12 @@ void CodeGenerator::processNode(ASTNode *node) {
             currentCommand = FOR_DOWNTO;
             this->forNode.iterator = symbolAddress;
             this->forNode.mode = DOWN_STEP;
-            auto currLineCounter1 = lineCounter;
             std::string label1 = "beg_for_down_to" + std::to_string(noFors);
             std::string label2 = "end_for_down_to" + std::to_string(noFors);
             this->forNode.name = label2;
             processNode(forDowntoNode->valueFrom);
             processNode(forDowntoNode->valueTo);
+            auto currLineCounter1 = lineCounter;
             processNode(forDowntoNode->commands);
             // increment iterator
             instructions.emplace_back(
@@ -242,8 +242,8 @@ void CodeGenerator::processNode(ASTNode *node) {
             instructions.emplace_back(JUMP, label1);
             lineCounter += 6;
             auto currLineCounter2 = lineCounter;
-            auto relativePathDist1 = currLineCounter1 - currLineCounter2 + 3;
-            auto relativePathDist2 = currLineCounter2 - currLineCounter1 - 4;
+            auto relativePathDist1 = currLineCounter1 - currLineCounter2 - 2;
+            auto relativePathDist2 = currLineCounter2 - currLineCounter1 + 1;
             markers.emplace_back(label1, relativePathDist1);
             markers.emplace_back(label2, relativePathDist2);
             break;
