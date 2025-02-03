@@ -1,0 +1,12 @@
+PROGRAM IS
+ tc[0:24], j
+BEGIN
+  j:=0;
+  tc[0]:=10;
+  WHILE j<tc[0] DO
+    WRITE j;
+    j:=j+1;
+	ENDWHILE
+
+
+END

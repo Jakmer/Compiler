@@ -1,0 +1,10 @@
+PROGRAM IS
+	tc[0:1]
+BEGIN
+	tc[0]:=0;
+
+  FOR i FROM 4 DOWNTO tc[0] DO
+    WRITE i;
+	ENDFOR
+
+END

@@ -140,7 +140,6 @@ class AssignNode : public Node {
                 int jump3 = 19;
                 int jump4 = -20;
 
-                std::cout<<"p1: "<<identifier1<<"\n";
                 instructions.emplace_back(LOAD, freeReg1, true);
                 instructions.emplace_back(JZERO, jump1, true);
                 instructions.emplace_back(JPOS, 3, true);
@@ -589,12 +588,12 @@ class ConditionNode : public Node {
         auto freeReg2 = memory.getFreeRegister();
         memory.lockReg(freeReg2);
         instructions.emplace_back(LOAD, identifier2);
-        instructions.emplace_back(STORE, freeReg2);
+        instructions.emplace_back(STORE, freeReg2, true);
 
         auto freeReg1 = memory.getFreeRegister();
         memory.lockReg(freeReg1);
         instructions.emplace_back(LOAD, identifier1);
-        instructions.emplace_back(STORE, freeReg1);
+        instructions.emplace_back(STORE, freeReg1, true);
 
         std::string jumpOverIf =
             name;  // during generation replace jumpOverIf labe with marker
@@ -604,7 +603,7 @@ class ConditionNode : public Node {
 
         switch (operation) {
             case EQ: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 // JPOS jump if !=0
                 // JNEG jump if !=0
                 instructions.emplace_back(JPOS, jumpOverIfIncremented);
@@ -612,13 +611,13 @@ class ConditionNode : public Node {
                 break;
             }
             case NEQ: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 // JZERO    jump only if acc == 0
                 instructions.emplace_back(JZERO, jumpOverIf);
                 break;
             }
             case GT: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 // JZERO    jump only if acc >= 0
                 // JNEG
                 instructions.emplace_back(JZERO, jumpOverIfIncremented);
@@ -626,7 +625,7 @@ class ConditionNode : public Node {
                 break;
             }
             case LT: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 // JZERO    jump only if acc <= 0
                 // JPOS
                 instructions.emplace_back(JZERO, jumpOverIfIncremented);
@@ -634,13 +633,13 @@ class ConditionNode : public Node {
                 break;
             }
             case GE: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 // JNEG     jump only if acc < 0
                 instructions.emplace_back(JNEG, jumpOverIf);
                 break;
             }
             case LE: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 // JPOS    jump only if acc > 0
                 instructions.emplace_back(JPOS, jumpOverIf);
                 break;
@@ -671,47 +670,47 @@ class RepeatNode : public Node {
         auto freeReg2 = memory.getFreeRegister();
         memory.lockReg(freeReg2);
         instructions.emplace_back(LOAD, identifier2);
-        instructions.emplace_back(STORE, freeReg2);
+        instructions.emplace_back(STORE, freeReg2, true);
 
         auto freeReg1 = memory.getFreeRegister();
         memory.lockReg(freeReg1);
         instructions.emplace_back(LOAD, identifier1);
-        instructions.emplace_back(STORE, freeReg1);
+        instructions.emplace_back(STORE, freeReg1, true);
 
         std::string jumpToBegining = name;
         std::string jumpToBeginingInc = name + ":inc";
 
         switch (operation) {
             case EQ: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JPOS, jumpToBeginingInc);
                 instructions.emplace_back(JNEG, jumpToBegining);
                 break;
             }
             case NEQ: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JZERO, jumpToBegining);
                 break;
             }
             case GT: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JNEG, jumpToBeginingInc);
                 instructions.emplace_back(JPOS, jumpToBegining);
                 break;
             }
             case LT: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JZERO, jumpToBeginingInc);
                 instructions.emplace_back(JPOS, jumpToBegining);
                 break;
             }
             case GE: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JNEG, jumpToBeginingInc);
                 break;
             }
             case LE: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JPOS, jumpToBegining);
                 break;
             }
@@ -741,47 +740,47 @@ class WhileNode : public Node {
         auto freeReg2 = memory.getFreeRegister();
         memory.lockReg(freeReg2);
         instructions.emplace_back(LOAD, identifier2);
-        instructions.emplace_back(STORE, freeReg2);
+        instructions.emplace_back(STORE, freeReg2, true);
 
         auto freeReg1 = memory.getFreeRegister();
         memory.lockReg(freeReg1);
         instructions.emplace_back(LOAD, identifier1);
-        instructions.emplace_back(STORE, freeReg1);
+        instructions.emplace_back(STORE, freeReg1, true);
 
         std::string jumpOverCommands = name;
         std::string jumpOverCommandsInc = name + ":inc";
 
         switch (operation) {
             case EQ: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JPOS, jumpOverCommandsInc);
                 instructions.emplace_back(JNEG, jumpOverCommands);
                 break;
             }
             case NEQ: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JZERO, jumpOverCommands);
                 break;
             }
             case GT: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JNEG, jumpOverCommandsInc);
                 instructions.emplace_back(JZERO, jumpOverCommands);
                 break;
             }
             case LT: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JPOS, jumpOverCommandsInc);
                 instructions.emplace_back(JZERO, jumpOverCommands);
                 break;
             }
             case GE: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JNEG, jumpOverCommands);
                 break;
             }
             case LE: {
-                instructions.emplace_back(SUB, freeReg2);
+                instructions.emplace_back(SUB, freeReg2, true);
                 instructions.emplace_back(JPOS, jumpOverCommands);
                 break;
             }
