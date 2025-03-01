@@ -1,5 +1,8 @@
 set(SOURCES
     CodeGenerator.cpp
+    InstructNodes.cpp
+    Instructions.cpp
+    Memory.cpp
 )
 
 add_library(codegen_lib
@@ -8,10 +11,12 @@ add_library(codegen_lib
 
 target_include_directories(codegen_lib PUBLIC 
     ${CMAKE_SOURCE_DIR}/inc/codegen
-    ${CMAKE_SOURCE_DIR}/inc/semantic_analyzer
-    ${CMAKE_SOURCE_DIR}/inc/compiler_ifc
-    ${CMAKE_SOURCE_DIR}/inc/ast
 )
+
+target_link_libraries(codegen_lib PUBLIC
+    semana_lib
+    ast_lib
+    compiler_ifc_lib)
 
 add_library(codegen_lib_debug
     ${SOURCES}
@@ -19,10 +24,12 @@ add_library(codegen_lib_debug
 
 target_include_directories(codegen_lib_debug PUBLIC 
     ${CMAKE_SOURCE_DIR}/inc/codegen
-    ${CMAKE_SOURCE_DIR}/inc/semantic_analyzer
-    ${CMAKE_SOURCE_DIR}/inc/compiler_ifc
-    ${CMAKE_SOURCE_DIR}/inc/ast
 )
+
+target_link_libraries(codegen_lib_debug PUBLIC
+    semana_lib_debug
+    ast_lib_debug
+    compiler_ifc_lib_debug)
 
 set_target_properties(codegen_lib_debug PROPERTIES
     COMPILE_FLAGS "-ggdb3 -O0"
