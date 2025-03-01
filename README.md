@@ -1,33 +1,41 @@
-# Compiler
+# Compiler 🛠️
 
-This project contains a compiler built using BISON and FLEX, which translates code written in a simple imperative language into a virtual machine's instruction set. The virtual machine then executes this code based on a predefined set of operations.
+This project contains a compiler built using **BISON** and **FLEX**, which translates code written in a simple imperative language into a virtual machine's instruction set. The virtual machine then executes this code based on a predefined set of operations.
+
+The project has been developed for the **"Formal Languages and Translation Techniques"** course, taught by **Professor Maciej Gębala** at **Wrocław University of Science and Technology** during the **2024/2025** academic year
 
 Core of compiler is written in **C++** and tests are supported by **Bash**, **Python** and **Valgrind**.
 
-## Imperative Language
+## Imperative Language 📜
 
 Description of the language's functionality in bullet points:
 
-- **Integer Arithmetic**: Supports addition, subtraction, multiplication, division, and modulo operations.
-- **Variables and Arrays**:
+- **Integer Arithmetic**: ➕ ➖ ✖️ ➗
+
+  Supports addition, subtraction, multiplication, division, and modulo operations.
+- **Variables and Arrays**: 💾
+
   Integer variables can be declared and assigned values.
   Arrays can be declared with a specific index range (e.g., array[-10:10]).
-- **Control Flow**:
+- **Control Flow**: 🔄 ❓
+
   IF-THEN-ELSE for conditional execution.
   WHILE loops for repetitive execution with a condition.
   REPEAT-UNTIL loops that execute at least once before checking the condition.
   FOR loops with an iterator, supporting both increasing (TO) and decreasing (DOWNTO) sequences.
-- **Procedures**:
-- **Input/Output**:
+- **Procedures**: 🔧
+- **Input/Output**: ⬇️ ⬆️
+
   READ reads an integer from input and assigns it to a variable.
   WRITE prints a variable or number to output.
-- **Syntax Rules**:
+- **Syntax Rules**: 📝
+
   Case-sensitive.
   Comments start with # and extend to the end of the line.
   Identifiers follow the pattern [_a-z]+ (lowercase letters and underscores).
   Integer constants are 64-bit in the source code but have no limit in execution.
 
-Full specification in **specification.pdf**
+Full specification in [Specification.pdf](Specification.pdf)
 
 Example program - **program.imp**:
 
@@ -51,13 +59,13 @@ BEGIN
 END
 ```
 
-## Dependencies
+## Dependencies 🧰
 
 To compile successfully you need to install the following tools:
 
     sudo apt install g++ make cmake flex bison
 
-## Compilation
+## Compilation ⚙️
 
 Compiler compilation is done by **Cmake**:
 
@@ -75,7 +83,7 @@ Clean VM:
         make cleanall
 
 
-## Usage
+## Usage 🚀
 
 Compile program into assembly:
 
@@ -86,26 +94,26 @@ Run compiled program with virtual machine:
     ./maszyna-wirtualna <output>
 
 
-## Testing
+## Testing 🧪
 
 There are provided three types of test
 
-- Memory tests:
+- Memory tests: 🧠
 
         make valgrind_test
 
-- Tests checking if compiler puts errors for incorrect programs:
+- Tests checking if compiler puts errors for incorrect programs: ⚠️
 
         make test
 
-- Python tests for expected output:
+- Python tests for expected output: 🐍
 
         cd vm
         make
         python3 ../test/test-runner.py
         make cleanall
 
-## Virtual Machine
+## Virtual Machine 🤖
 
 **Author of virtual machine is Professor Maciej Gębala.**
 
@@ -116,7 +124,7 @@ The virtual machine consists of a program counter (**k**) and a series of memory
 The machine operates on **64-bit integers** and executes commands that modify the state of the accumulator or perform memory operations. Each instruction has a specified execution cost, and the program flow is directed by jumps and conditional checks.
 
 
-Instruction set:
+Instruction set: 📝
 
 | Instruction | Interpretation | Execution Time |
 |-------------|----------------|----------------|
@@ -138,3 +146,7 @@ Instruction set:
 | **JNEG j**      | if p<sub>0</sub> < 0 then k ← k + j, otherwise k ← k + 1 | 1 |
 | **RTRN i**      | k ← p<sub>i</sub> | 10 |
 | **HALT**        | stop the program | 0 |
+
+## License 📜
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
